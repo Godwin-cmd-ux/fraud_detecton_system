@@ -1,0 +1,12 @@
+feature,importance
+failed_withdrawals_last_10min,0.40943348
+unique_senders_last_5min,0.2878805
+transaction_count_last_5min,0.17415334
+unique_receivers_last_5min,0.12853271
+amount,0.0
+amount_last_5min,0.0
+transaction_hour,0.0
+avg_user_amount,0.0
+amount_deviation,0.0
+account_age_days,0.0
+balance,0.0

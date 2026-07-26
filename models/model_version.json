@@ -1,0 +1,27 @@
+{
+  "model_version": "1.0.0",
+  "training_date": "2026-06-19 22:24:48",
+  "samples_used": 100000,
+  "features_used": [
+    "amount",
+    "transaction_count_last_5min",
+    "amount_last_5min",
+    "unique_receivers_last_5min",
+    "unique_senders_last_5min",
+    "failed_withdrawals_last_10min",
+    "transaction_hour",
+    "avg_user_amount",
+    "amount_deviation",
+    "account_age_days",
+    "balance"
+  ],
+  "model_type": "XGBoost",
+  "metrics": {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "roc_auc": 1.0
+  },
+  "fraud_ratio": 0.15
+}

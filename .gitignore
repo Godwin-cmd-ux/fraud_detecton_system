@@ -1,0 +1,14 @@
+# Runtime logs
+logs/
+
+# Temp files
+temp/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.sublime-*
