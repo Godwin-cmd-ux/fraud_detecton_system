@@ -7,7 +7,8 @@ Mobile-money wallet demo (Tanzanian shillings) with rule-based and ML fraud dete
 - `packages/shared` — zod schemas, types and fraud constants shared by both
 - `services/fraud-api` — Python Flask + XGBoost scoring service
 - `models/` — trained model artifacts
-- `legacy/php` — the original PHP implementation, kept for reference
+
+The original PHP application was removed after the TypeScript rewrite passed automated checks and browser verification. Earlier versions remain available in Git history. See [verification results](docs/rewrite-verification.md).
 
 ## Local setup
 
@@ -19,6 +20,12 @@ Run commands from the repository root. Install Node.js 22 or newer, pnpm 10.34.5
 
    ```sh
    pnpm install
+   python -m venv .venv
+   ```
+
+   Activate the virtual environment with `.venv\Scripts\Activate.ps1` in PowerShell, or `source .venv/bin/activate` on macOS/Linux, then run:
+
+   ```sh
    python -m pip install -r services/fraud-api/requirements.txt
    pnpm db:migrate
    pnpm db:seed
@@ -27,6 +34,8 @@ Run commands from the repository root. Install Node.js 22 or newer, pnpm 10.34.5
 The migration command creates the database if absent; the PostgreSQL user needs database creation privileges for that step. The seed inserts demo accounts without overwriting existing accounts.
 
 Start the scoring service in one terminal and the API/frontend in another:
+
+Activate the virtual environment in the scoring terminal so `pnpm ml` uses the installed Python dependencies. On Windows you can also run `.venv\Scripts\python.exe services/fraud-api/app.py` directly.
 
 ```sh
 pnpm ml

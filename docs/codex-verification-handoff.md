@@ -1,5 +1,7 @@
 # Task 23 documentation contribution
 
+**Superseded:** the implementation and verification work is now finished. See [final verification results](rewrite-verification.md) for the 167 passing tests, runtime checks, and browser walkthrough. The progress notes below describe the earlier contribution.
+
 Codex expanded `README.md` with local setup, environment configuration, PostgreSQL requirements, Python dependencies, service startup, health checks, actual seeded credentials and balances, test commands, and the integration test database isolation requirement. Commands and credentials were checked against repository source. Root scripts already cover the requested commands, and `apps/web/public/favicon.svg` already exists and is linked from `index.html`, so neither needed changes.
 
 Scope: README and handoff documentation only. Task 20 implementation files and the Claude progress ledger were left untouched. No commits or pushes were made.

@@ -25,7 +25,7 @@ export function StatusBadge({ status }: { status: TransactionStatus }) {
   return <Badge tone={tone}>{status}</Badge>;
 }
 
-/** Risk level with the PHP's PENDING fallback when no level is stored. */
+/** Risk level with a PENDING fallback when no level is stored. */
 export function RiskBadge({ level }: { level: RiskLevel | null | undefined }) {
   if (!level) return <Badge tone="gray">PENDING</Badge>;
   const tone: BadgeTone = level === 'HIGH' ? 'red' : level === 'MEDIUM' ? 'amber' : 'green';

@@ -241,6 +241,7 @@ export async function addBalance(
       ipAddress: ip,
       userAgent,
       adminId: admin.id,
+      createdAt: now,
     });
     transactionId = inserted.transactionId;
     await logAdminAction(tx, {

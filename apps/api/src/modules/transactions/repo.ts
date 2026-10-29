@@ -6,6 +6,7 @@ import { newTransactionId } from '../../lib/ids';
 import { money } from '../../lib/money';
 
 export interface NewTransaction {
+  createdAt?: Date;
   transactionId: string;
   senderId: number | null;
   receiverId: number | null;

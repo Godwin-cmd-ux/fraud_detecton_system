@@ -151,6 +151,7 @@ describe('balance adjustments log', () => {
       ]),
     );
     expect(res.body.items[0]).toMatchObject({
+      createdAt: NOW.toISOString(),
       type: 'refund',
       amount: 1000,
       userName: 'Baraka Mushi',

@@ -1,6 +1,6 @@
 import { riskColor } from '../../lib/format';
 
-/** Score bar with the PHP's colour thresholds; `twoTone` uses only red/amber as the alert pages did. */
+/** Score bar with risk colour thresholds; `twoTone` uses red/amber for alert pages. */
 export function RiskBar({ score, twoTone = false }: { score: number; twoTone?: boolean }) {
   const color = twoTone ? (score > 70 ? '#ef4444' : '#f59e0b') : riskColor(score);
   const width = Math.max(0, Math.min(100, score));

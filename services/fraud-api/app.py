@@ -3,7 +3,7 @@
 
 """
 FRAUD DETECTION API SERVICE
-This service provides fraud prediction endpoints for the PHP application.
+This service provides fraud prediction endpoints for the Node.js application.
 Run: python app.py
 """
 
