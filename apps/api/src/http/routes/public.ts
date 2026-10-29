@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { sql } from 'drizzle-orm';
 import type { AppDeps } from '../app';
+import { listActiveQuestions } from '../../modules/auth/register';
 
 export function publicRoutes(deps: AppDeps): Router {
   const r = Router();
@@ -15,6 +16,14 @@ export function publicRoutes(deps: AppDeps): Router {
     }
     const available = await deps.ml.isAvailable();
     res.json({ status: 'ok', db, ml: { available } });
+  });
+
+  r.get('/security-questions', async (_req, res, next) => {
+    try {
+      res.json(await listActiveQuestions(deps.db));
+    } catch (e) {
+      next(e);
+    }
   });
 
   return r;

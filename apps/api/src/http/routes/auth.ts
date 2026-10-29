@@ -1,10 +1,15 @@
 import { Router } from 'express';
 import type { Request } from 'express';
-import { loginSchema } from '@fraud/shared';
-import type { LoginInput, Principal } from '@fraud/shared';
+import { adminSignupSchema, loginSchema, registerSchema } from '@fraud/shared';
+import type { AdminSignupInput, LoginInput, Principal, RegisterInput } from '@fraud/shared';
 import type { AppDeps } from '../app';
 import { HttpError } from '../../lib/errors';
+import { adminSignup, isFirstAdmin } from '../../modules/auth/adminSignup';
 import { login } from '../../modules/auth/login';
+import { registerUser } from '../../modules/auth/register';
+
+export const REGISTER_SUCCESS_MSG =
+  "Registration successful. Your account is pending admin approval — you'll be notified once it's reviewed.";
 import { clientIp } from '../middleware/auth';
 import { SESSION_COOKIE } from '../middleware/session';
 import { validate } from '../middleware/validate';
@@ -46,6 +51,32 @@ export function authRoutes(deps: AppDeps): Router {
     const p = req.session.principal;
     if (!p) return next(new HttpError(401, 'UNAUTHENTICATED', 'Please sign in'));
     res.json(p);
+  });
+
+  r.post('/register', validate(registerSchema, 'body'), async (req, res, next) => {
+    try {
+      await registerUser(deps.db, res.locals.body as RegisterInput);
+      res.status(201).json({ message: REGISTER_SUCCESS_MSG });
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  r.get('/admin-signup/status', async (_req, res, next) => {
+    try {
+      res.json({ firstAdmin: await isFirstAdmin(deps.db) });
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  r.post('/admin-signup', validate(adminSignupSchema, 'body'), async (req, res, next) => {
+    try {
+      await adminSignup(deps.db, res.locals.body as AdminSignupInput, deps.adminSetupKey);
+      res.status(201).json({ message: '✅ Admin account created successfully! You can now login.' });
+    } catch (e) {
+      next(e);
+    }
   });
 
   return r;
