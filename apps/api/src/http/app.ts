@@ -8,9 +8,9 @@ import type { MlClient } from '../modules/fraud/mlClient';
 import { HttpError } from '../lib/errors';
 import { csrfGuard } from './middleware/csrf';
 import { errorHandler } from './middleware/errorHandler';
-import { requireUser } from './middleware/auth';
 import { sessionMiddleware } from './middleware/session';
 import { authRoutes } from './routes/auth';
+import { meRoutes } from './routes/me';
 import { publicRoutes } from './routes/public';
 
 export interface AppDeps {
@@ -41,11 +41,7 @@ export function createApp(deps: AppDeps): express.Express {
 
   app.use('/api', publicRoutes(deps));
   app.use('/api/auth', authRoutes(deps));
-
-  // Placeholder user area so authentication is enforced before the real routes land.
-  app.use('/api/me', requireUser, (_req, _res, next) =>
-    next(new HttpError(404, 'NOT_FOUND', 'Not found')),
-  );
+  app.use('/api/me', meRoutes(deps));
 
   app.use((_req, _res, next) => next(new HttpError(404, 'NOT_FOUND', 'Not found')));
   app.use(errorHandler(logger));
