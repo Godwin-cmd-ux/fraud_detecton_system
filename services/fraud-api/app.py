@@ -31,7 +31,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Model paths
-MODEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'models')
+MODEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'models')
 MODEL_PATH = os.path.join(MODEL_DIR, 'fraud_model.pkl')
 FEATURES_PATH = os.path.join(MODEL_DIR, 'feature_columns.pkl')
 SCALER_PATH = os.path.join(MODEL_DIR, 'scaler.pkl')
