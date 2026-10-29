@@ -1,0 +1,30 @@
+{
+  "name": "fraud-detection-system",
+  "private": true,
+  "version": "2.0.0",
+  "description": "Fraud detection wallet: React + TypeScript frontend, Node.js API, PostgreSQL, Python ML scoring service",
+  "type": "module",
+  "packageManager": "pnpm@10.34.5",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,magenta \"pnpm --filter @fraud/api dev\" \"pnpm --filter @fraud/web dev\"",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint .",
+    "format": "prettier --write \"apps/**/*.{ts,tsx,css}\" \"packages/**/*.ts\"",
+    "db:migrate": "pnpm --filter @fraud/api db:migrate",
+    "db:seed": "pnpm --filter @fraud/api db:seed",
+    "ml": "python services/fraud-api/app.py"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "concurrently": "^9.0.0",
+    "eslint": "^9.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "~5.9.0",
+    "typescript-eslint": "^8.0.0"
+  }
+}

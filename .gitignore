@@ -1,8 +1,22 @@
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+
 # Runtime logs
 logs/
-
-# Temp files
 temp/
+*.log
+
+# Python
+.venv/
+__pycache__/
+*.pyc
 
 # OS files
 .DS_Store
@@ -12,3 +26,6 @@ Thumbs.db
 .idea/
 .vscode/
 *.sublime-*
+
+# Superpowers scratch
+.superpowers/

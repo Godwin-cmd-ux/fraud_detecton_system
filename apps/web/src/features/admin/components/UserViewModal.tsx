@@ -1,0 +1,114 @@
+import { Link } from 'react-router';
+import type { AdminUserRow } from '@fraud/shared';
+import { Button } from '../../../components/ui/Button';
+import { Modal } from '../../../components/ui/Modal';
+import { formatDate, formatTsh } from '../../../lib/format';
+import type { UserAction } from '../../../api/admin';
+
+export function statusLabel(u: Pick<AdminUserRow, 'status'>): { text: string; sub: string; color: string } {
+  switch (u.status) {
+    case 'inactive':
+      return { text: '🔴 Inactive', sub: 'Deactivated', color: '#991b1b' };
+    case 'pending':
+      return { text: '⏳ Pending', sub: 'Awaiting Approval', color: '#92400e' };
+    default:
+      return { text: '✅ Active', sub: 'Fully Active', color: '#065f46' };
+  }
+}
+
+/** The action buttons shown for a user; only the transitions that apply to its current state. */
+export function UserActionButtons({
+  user,
+  onAction,
+  onDelete,
+  size = 'sm',
+}: {
+  user: AdminUserRow;
+  onAction: (action: UserAction) => void;
+  onDelete: () => void;
+  size?: 'sm' | 'md';
+}) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {!user.isApproved && user.isActive && (
+        <Button size={size} variant="success" onClick={() => onAction('approve')}>
+          Approve
+        </Button>
+      )}
+      {user.isApproved && user.isActive && (
+        <Button size={size} variant="warning" onClick={() => onAction('disapprove')}>
+          Disapprove
+        </Button>
+      )}
+      {user.isActive ? (
+        <Button size={size} variant="secondary" onClick={() => onAction('deactivate')}>
+          Deactivate
+        </Button>
+      ) : (
+        <Button size={size} variant="success" onClick={() => onAction('activate')}>
+          Activate
+        </Button>
+      )}
+      <Button size={size} variant="danger" onClick={onDelete}>
+        Delete
+      </Button>
+    </div>
+  );
+}
+
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-4 border-b border-p-border py-2 text-sm last:border-b-0">
+      <span className="text-p-muted">{label}</span>
+      <span className="text-right font-medium text-p-dark">{children}</span>
+    </div>
+  );
+}
+
+export function UserViewModal({
+  user,
+  onClose,
+  onAction,
+  onDelete,
+}: {
+  user: AdminUserRow | null;
+  onClose: () => void;
+  onAction: (action: UserAction) => void;
+  onDelete: () => void;
+}) {
+  const status = user ? statusLabel(user) : null;
+  return (
+    <Modal
+      open={user !== null}
+      onClose={onClose}
+      title="👁️ User Details"
+      footer={
+        user && (
+          <>
+            <UserActionButtons user={user} onAction={onAction} onDelete={onDelete} size="md" />
+            <Link to={`/admin/users/${user.id}/balance`}>
+              <Button>💰 Add Balance</Button>
+            </Link>
+            <Button variant="secondary" onClick={onClose}>
+              Close
+            </Button>
+          </>
+        )
+      }
+    >
+      {user && status && (
+        <div>
+          <Row label="Full Name">{user.fullName}</Row>
+          <Row label="Email">{user.email}</Row>
+          <Row label="Phone">{user.phone}</Row>
+          <Row label="Current Balance">{formatTsh(user.balance)}</Row>
+          <Row label="Card">****{user.cardLast4}</Row>
+          <Row label="Status">
+            <span style={{ color: status.color }}>{status.text}</span>
+          </Row>
+          <Row label="Account Created">{formatDate(user.createdAt, 'long')}</Row>
+        </div>
+      )}
+    </Modal>
+  );
+}

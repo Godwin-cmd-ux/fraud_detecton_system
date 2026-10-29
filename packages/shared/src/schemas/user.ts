@@ -1,0 +1,75 @@
+import { z } from 'zod';
+import { TRANSACTION_STATUSES } from '../constants';
+import type { FraudPrediction, RiskLevel, TransactionStatus, TransactionType } from '../constants';
+import { amountSchema, locationSchema, pageSchema } from './common';
+
+export const transferSchema = z.object({
+  receiverId: z.number().int().positive(),
+  amount: amountSchema,
+  location: locationSchema,
+  message: z.string().trim().max(500).optional(),
+});
+export type TransferInput = z.infer<typeof transferSchema>;
+
+export const withdrawalSchema = z.object({
+  amount: amountSchema,
+  location: locationSchema,
+  message: z.string().trim().max(500).optional(),
+});
+export type WithdrawalInput = z.infer<typeof withdrawalSchema>;
+
+export const verifyPasswordSchema = z.object({ password: z.string().min(1) });
+
+export const fraudFilterSchema = z.enum(['fraud', 'legit', 'pending']);
+export type FraudFilter = z.infer<typeof fraudFilterSchema>;
+
+export const userTransactionsQuerySchema = z.object({
+  search: z.string().trim().optional(),
+  status: z.enum(TRANSACTION_STATUSES).optional(),
+  fraud: fraudFilterSchema.optional(),
+  page: pageSchema,
+});
+export type UserTransactionsQuery = z.infer<typeof userTransactionsQuerySchema>;
+
+export type TransferResult =
+  | {
+      outcome: 'blocked';
+      reason: string;
+      message: string;
+      riskScore: number;
+      riskLevel: RiskLevel;
+      transactionId: string;
+      locationWarning?: string;
+    }
+  | {
+      outcome: 'success';
+      message: string;
+      transactionId: string;
+      newBalance: number;
+      riskScore: number;
+      riskLevel: RiskLevel;
+      flaggedForReview: boolean;
+      locationWarning?: string;
+    };
+
+export type WithdrawalResult =
+  | TransferResult
+  | { outcome: 'failed'; message: string; failedAttempts: number; blocked: boolean };
+
+export type TransactionDirection = 'sent' | 'received' | 'withdrawal' | 'deposit';
+
+export interface TransactionListItem {
+  id: number;
+  transactionId: string;
+  type: TransactionType;
+  direction: TransactionDirection;
+  counterpartyName: string | null;
+  amount: number;
+  status: TransactionStatus;
+  fraudScore: number;
+  fraudPrediction: FraudPrediction | null;
+  riskLevel: RiskLevel | null;
+  message: string | null;
+  location: string | null;
+  createdAt: string;
+}

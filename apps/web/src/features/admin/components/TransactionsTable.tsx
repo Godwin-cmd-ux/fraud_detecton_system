@@ -1,0 +1,75 @@
+import { Link } from 'react-router';
+import type { ReactNode } from 'react';
+import type { AdminTxRow } from '../../../api/types';
+import { RiskBadge, StatusBadge } from '../../../components/ui/Badge';
+import { RiskBar } from '../../../components/ui/RiskBar';
+import { Table, Td, Th } from '../../../components/ui/Table';
+import { formatDate, formatTsh } from '../../../lib/format';
+
+export const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+export interface TransactionsTableProps {
+  items: AdminTxRow[];
+  /**
+   * Alert layout (fraud alert pages): date & time first, "Unknown" for missing parties,
+   * two-tone score colouring and a row class per risk level, as the original alert table.
+   */
+  alert?: boolean;
+  /** Extra per-row controls rendered after the View link. */
+  actions?: (row: AdminTxRow) => ReactNode;
+  /** Hide the type and score columns (dashboard "recent" lists). */
+  compact?: boolean;
+}
+
+/** Shared transaction table for the admin dashboard, monitoring and alert pages. */
+export function TransactionsTable({ items, alert = false, actions, compact = false }: TransactionsTableProps) {
+  const nullParty = alert ? 'Unknown' : 'System';
+  return (
+    <Table>
+      <thead>
+        <tr>
+          {alert && <Th>Date &amp; Time</Th>}
+          <Th>Transaction ID</Th>
+          <Th>Sender</Th>
+          <Th>Receiver</Th>
+          <Th>Amount</Th>
+          {!alert && !compact && <Th>Type</Th>}
+          <Th>Status</Th>
+          {!compact && <Th>Risk Score</Th>}
+          <Th>Risk Level</Th>
+          {!alert && <Th>Date</Th>}
+          <Th>Actions</Th>
+        </tr>
+      </thead>
+      <tbody>
+        {items.map((r) => (
+          <tr key={r.id} className={alert ? `alert-row-${(r.riskLevel ?? 'pending').toLowerCase()}` : undefined}>
+            {alert && <Td className="whitespace-nowrap text-p-muted">{formatDate(r.createdAt, 'second')}</Td>}
+            <Td className="font-mono text-xs">{r.transactionId}</Td>
+            <Td>{r.senderName ?? nullParty}</Td>
+            <Td>{r.receiverName ?? nullParty}</Td>
+            <Td className="font-semibold whitespace-nowrap">{formatTsh(r.amount)}</Td>
+            {!alert && !compact && <Td>{capitalize(r.type)}</Td>}
+            <Td>
+              <StatusBadge status={r.status} />
+              {r.reviewedAt && <span className="ml-1 text-xs text-p-muted">· Reviewed</span>}
+            </Td>
+            {!compact && <Td>{r.fraudScore > 0 ? <RiskBar score={r.fraudScore} twoTone={alert} /> : <span className="text-p-muted">N/A</span>}</Td>}
+            <Td>
+              <RiskBadge level={r.riskLevel} />
+            </Td>
+            {!alert && <Td className="whitespace-nowrap text-p-muted">{formatDate(r.createdAt, 'minute')}</Td>}
+            <Td>
+              <div className="flex flex-wrap gap-1.5">
+                <Link to={`/admin/transactions/${r.id}`} className="rounded-md bg-p-primary px-2.5 py-1 text-xs font-semibold text-white">
+                  View
+                </Link>
+                {actions?.(r)}
+              </div>
+            </Td>
+          </tr>
+        ))}
+      </tbody>
+    </Table>
+  );
+}
