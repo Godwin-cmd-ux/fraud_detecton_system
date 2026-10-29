@@ -92,16 +92,20 @@ export async function createAdmin(
   return { id: row!.id, username, email, password, fullName };
 }
 
+let txSeq = 0;
+
 /** Inserts a transaction row directly, allowing an explicit created_at for window tests. */
 export async function insertTx(
   db: Db,
   o: Partial<NewTransaction> & { createdAt?: Date; now?: Date },
 ): Promise<{ id: number }> {
   const now = o.now ?? new Date();
+  // Fixture ids use a sequence suffix so bulk inserts within one second never collide.
+  const seqId = newTransactionId(now, () => 0).slice(0, -4) + String(1000 + (++txSeq % 9000));
   const [row] = await db
     .insert(transactions)
     .values({
-      transactionId: o.transactionId ?? newTransactionId(now),
+      transactionId: o.transactionId ?? seqId,
       senderId: o.senderId ?? null,
       receiverId: o.receiverId ?? null,
       senderName: o.senderName ?? null,

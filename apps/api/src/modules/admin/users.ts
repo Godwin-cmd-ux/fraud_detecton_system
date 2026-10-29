@@ -218,10 +218,10 @@ export async function addBalance(
   now: Date,
 ): Promise<{ newBalance: number; transactionId: string; message: string }> {
   const user = await requireUserRow(db, id);
-  const transactionId = newTransactionId(now);
+  let transactionId = newTransactionId(now);
   await db.transaction(async (tx) => {
     await creditBalance(tx, id, input.amount);
-    await insertTransaction(tx, {
+    const inserted = await insertTransaction(tx, {
       transactionId,
       senderId: null,
       receiverId: id,
@@ -242,6 +242,7 @@ export async function addBalance(
       userAgent,
       adminId: admin.id,
     });
+    transactionId = inserted.transactionId;
     await logAdminAction(tx, {
       adminId: admin.id,
       adminName: admin.name,

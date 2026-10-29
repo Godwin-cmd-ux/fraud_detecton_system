@@ -67,7 +67,7 @@ async function recordPatternBlock(
   block: PatternBlock,
   locationWarningText?: string,
 ): Promise<TransferResult> {
-  await insertTransaction(db, {
+  const inserted = await insertTransaction(db, {
     ...row,
     status: 'ABORTED',
     message: block.dbMessage,
@@ -81,7 +81,7 @@ async function recordPatternBlock(
     message: `❌ TRANSACTION BLOCKED\n\n${block.userMessage}`,
     riskScore: block.score,
     riskLevel: 'HIGH',
-    transactionId: row.transactionId,
+    transactionId: inserted.transactionId,
     ...(locationWarningText && { locationWarning: locationWarningText }),
   };
 }
@@ -152,14 +152,14 @@ export async function executeTransfer(d: TransferDeps, c: TransferCommand): Prom
   return d.db.transaction(async (tx) => {
     if (outcome.block) {
       const reason = outcome.blockReason ?? 'Fraud detected';
-      await insertTransaction(tx, { ...scored, status: 'ABORTED', message: `BLOCKED: ${reason} | ${message}` });
+      const inserted = await insertTransaction(tx, { ...scored, status: 'ABORTED', message: `BLOCKED: ${reason} | ${message}` });
       return {
         outcome: 'blocked',
         reason,
         message: BLOCKED_TEXT('Transaction', reason, outcome.fraudScore, outcome.riskLevel),
         riskScore: outcome.fraudScore,
         riskLevel: outcome.riskLevel,
-        transactionId: scored.transactionId,
+        transactionId: inserted.transactionId,
         ...(warning && { locationWarning: warning }),
       };
     }
@@ -169,12 +169,12 @@ export async function executeTransfer(d: TransferDeps, c: TransferCommand): Prom
     }
     await creditBalance(tx, receiver!.id, c.amount);
     await updateUserLocation(tx, sender.id, c.location);
-    await insertTransaction(tx, { ...scored, status: 'SUCCESS', message: message || null });
+    const inserted = await insertTransaction(tx, { ...scored, status: 'SUCCESS', message: message || null });
 
     return {
       outcome: 'success',
       message: `Transaction successful! You sent ${formatTsh(c.amount)} to ${receiver!.fullName}`,
-      transactionId: scored.transactionId,
+      transactionId: inserted.transactionId,
       newBalance: Math.round((balance - c.amount) * 100) / 100,
       riskScore: outcome.fraudScore,
       riskLevel: outcome.riskLevel,

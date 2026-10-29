@@ -2,6 +2,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import type { FraudPrediction, RiskLevel, TransactionStatus, TransactionType } from '@fraud/shared';
 import type { Db } from '../../db/client';
 import { transactions, users } from '../../db/schema';
+import { newTransactionId } from '../../lib/ids';
 import { money } from '../../lib/money';
 
 export interface NewTransaction {
@@ -26,16 +27,41 @@ export interface NewTransaction {
   adminId: number | null;
 }
 
-export async function insertTransaction(tx: Db, t: NewTransaction): Promise<{ id: number }> {
-  const [row] = await tx
-    .insert(transactions)
-    .values({
-      ...t,
-      amount: money(t.amount),
-      fraudScore: money(t.fraudScore),
-    })
-    .returning({ id: transactions.id });
-  return { id: row!.id };
+const MAX_ID_ATTEMPTS = 5;
+
+function isTransactionIdCollision(err: unknown): boolean {
+  const cause = (err as { cause?: { code?: string; constraint?: string } })?.cause ?? err;
+  return (
+    (cause as { code?: string })?.code === '23505' &&
+    (cause as { constraint?: string })?.constraint === 'transactions_transaction_id_unique'
+  );
+}
+
+/**
+ * Inserts the row; a transaction-id collision (same second, same random suffix) gets a fresh id.
+ * Each attempt runs in its own savepoint so a failure cannot abort an enclosing transaction.
+ * The id actually stored is returned and must be what callers report.
+ */
+export async function insertTransaction(
+  tx: Db,
+  t: NewTransaction,
+): Promise<{ id: number; transactionId: string }> {
+  let transactionId = t.transactionId;
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const id = await tx.transaction(async (sp) => {
+        const [row] = await sp
+          .insert(transactions)
+          .values({ ...t, transactionId, amount: money(t.amount), fraudScore: money(t.fraudScore) })
+          .returning({ id: transactions.id });
+        return row!.id;
+      });
+      return { id, transactionId };
+    } catch (err) {
+      if (!isTransactionIdCollision(err) || attempt >= MAX_ID_ATTEMPTS) throw err;
+      transactionId = newTransactionId(new Date());
+    }
+  }
 }
 
 /** Conditional debit; returns false (and changes nothing) when the balance is insufficient. */

@@ -69,7 +69,7 @@ export async function executeWithdrawal(d: TransferDeps, c: WithdrawalCommand): 
   // 1. Lockout after three consecutive failed attempts (stale counters reset inside).
   const failedCount = await getFailedWithdrawalCount(d.db, user.id, now);
   if (failedCount >= FRAUD.FAILED_WITHDRAWAL_BLOCK_COUNT) {
-    await insertTransaction(d.db, {
+    const inserted = await insertTransaction(d.db, {
       ...row,
       message: `BLOCKED: User has ${failedCount} consecutive failed withdrawal attempts | ${message}`,
       fraudScore: 95,
@@ -82,7 +82,7 @@ export async function executeWithdrawal(d: TransferDeps, c: WithdrawalCommand): 
       message: WITHDRAWAL_LOCKED_TEXT,
       riskScore: 95,
       riskLevel: 'HIGH',
-      transactionId: row.transactionId,
+      transactionId: inserted.transactionId,
     };
   }
 
@@ -138,14 +138,14 @@ export async function executeWithdrawal(d: TransferDeps, c: WithdrawalCommand): 
   return d.db.transaction(async (tx) => {
     if (outcome.block) {
       const reason = outcome.blockReason ?? 'Fraud detected';
-      await insertTransaction(tx, { ...scored, status: 'ABORTED', message: `BLOCKED: ${reason} | ${message}` });
+      const inserted = await insertTransaction(tx, { ...scored, status: 'ABORTED', message: `BLOCKED: ${reason} | ${message}` });
       return {
         outcome: 'blocked',
         reason,
         message: BLOCKED_TEXT('Withdrawal', reason, outcome.fraudScore, outcome.riskLevel),
         riskScore: outcome.fraudScore,
         riskLevel: outcome.riskLevel,
-        transactionId: scored.transactionId,
+        transactionId: inserted.transactionId,
       };
     }
 
@@ -154,11 +154,11 @@ export async function executeWithdrawal(d: TransferDeps, c: WithdrawalCommand): 
       throw new HttpError(409, 'DEBIT_FAILED', 'Failed to process withdrawal');
     }
     await updateUserLocation(tx, user.id, c.location);
-    await insertTransaction(tx, { ...scored, status: 'SUCCESS', message: message || null });
+    const inserted = await insertTransaction(tx, { ...scored, status: 'SUCCESS', message: message || null });
     return {
       outcome: 'success',
       message: `Withdrawal successful! You withdrew ${formatTsh(c.amount)}`,
-      transactionId: scored.transactionId,
+      transactionId: inserted.transactionId,
       newBalance: Math.round((balance - c.amount) * 100) / 100,
       riskScore: outcome.fraudScore,
       riskLevel: outcome.riskLevel,
