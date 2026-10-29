@@ -9,6 +9,7 @@ import { HttpError } from '../lib/errors';
 import { csrfGuard } from './middleware/csrf';
 import { errorHandler } from './middleware/errorHandler';
 import { sessionMiddleware } from './middleware/session';
+import { adminRoutes } from './routes/admin';
 import { authRoutes } from './routes/auth';
 import { meRoutes } from './routes/me';
 import { publicRoutes } from './routes/public';
@@ -42,6 +43,7 @@ export function createApp(deps: AppDeps): express.Express {
   app.use('/api', publicRoutes(deps));
   app.use('/api/auth', authRoutes(deps));
   app.use('/api/me', meRoutes(deps));
+  app.use('/api/admin', adminRoutes(deps));
 
   app.use((_req, _res, next) => next(new HttpError(404, 'NOT_FOUND', 'Not found')));
   app.use(errorHandler(logger));
