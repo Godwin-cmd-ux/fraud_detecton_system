@@ -19,7 +19,7 @@ const features: MlFeatures = {
 
 type Handler = (url: string, init?: RequestInit) => Promise<Response> | Response;
 const fakeFetch = (handler: Handler): typeof fetch =>
-  (async (input: RequestInfo | URL, init?: RequestInit) => handler(String(input), init)) as typeof fetch;
+  (async (input: string | URL | Request, init?: RequestInit) => handler(String(input), init)) as typeof fetch;
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
