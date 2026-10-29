@@ -1,3 +1,4 @@
+import { useLanguage, translate as tr } from '../../../i18n';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import type { TransactionListItem, TransactionStatus } from '@fraud/shared';
@@ -14,17 +15,26 @@ import { Select } from '../../../components/ui/Select';
 import { Spinner } from '../../../components/ui/Spinner';
 import { Card, EmptyState, Table, Td, Th } from '../../../components/ui/Table';
 import { formatDate, formatTsh, riskColor } from '../../../lib/format';
-import { TransactionDetailsModal, describeTransaction } from '../components/TransactionDetailsModal';
+import {
+  TransactionDetailsModal,
+  describeTransaction,
+} from '../components/TransactionDetailsModal';
 import { UnlockOverlay } from '../components/UnlockOverlay';
 
 export function UserTransactionsPage() {
+  useLanguage();
   const me = useMe();
   const [params, setParams] = useSearchParams();
   const search = params.get('search') ?? '';
   const status = (params.get('status') ?? '') as TransactionStatus | '';
   const fraud = (params.get('fraud') ?? '') as 'fraud' | 'legit' | 'pending' | '';
   const page = Number(params.get('page') ?? '1') || 1;
-  const query = useUserTransactions({ search: search || undefined, status: status || undefined, fraud: fraud || undefined, page });
+  const query = useUserTransactions({
+    search: search || undefined,
+    status: status || undefined,
+    fraud: fraud || undefined,
+    page,
+  });
   const lock = useLockTransactions();
   const [selected, setSelected] = useState<TransactionListItem | null>(null);
   const [confirmLock, setConfirmLock] = useState(false);
@@ -45,25 +55,25 @@ export function UserTransactionsPage() {
   return (
     <div>
       <TopHeader
-        title="Transaction History"
-        subtitle="All your transfers, withdrawals and deposits"
+        title={tr('Transaction History')}
+        subtitle={tr('All your transfers, withdrawals and deposits')}
         name={name}
         actions={
           query.data && !query.data.locked ? (
             <Button variant="secondary" size="sm" onClick={() => setConfirmLock(true)}>
-              🔒 Lock
+              {tr('🔒 Lock')}
             </Button>
           ) : null
         }
       />
 
       {query.isPending && <Spinner />}
-      {query.isError && <Alert kind="error">Could not load transactions.</Alert>}
+      {query.isError && <Alert kind="error">{tr('Could not load transactions.')}</Alert>}
       {query.data?.locked && <UnlockOverlay />}
 
       {query.data && !query.data.locked && (
         <Card
-          title={`Transactions (${query.data.total})`}
+          title={tr(`Transactions (${query.data.total})`)}
           actions={
             <form
               className="flex flex-wrap items-end gap-2"
@@ -72,44 +82,61 @@ export function UserTransactionsPage() {
                 update({ search: searchDraft });
               }}
             >
-              <Input placeholder="Search ID or message" value={searchDraft} onChange={(e) => setSearchDraft(e.target.value)} aria-label="Search" />
-              <Select aria-label="Status" value={status} onChange={(e) => update({ status: e.target.value })}>
-                <option value="">All statuses</option>
-                <option value="SUCCESS">Success</option>
-                <option value="ABORTED">Aborted</option>
-                <option value="PENDING">Pending</option>
+              <Input
+                placeholder={tr('Search ID or message')}
+                value={searchDraft}
+                onChange={(e) => setSearchDraft(e.target.value)}
+                aria-label={tr('Search')}
+              />
+              <Select
+                aria-label={tr('Status')}
+                value={status}
+                onChange={(e) => update({ status: e.target.value })}
+              >
+                <option value="">{tr('All statuses')}</option>
+                <option value="SUCCESS">{tr('Success')}</option>
+                <option value="ABORTED">{tr('Aborted')}</option>
+                <option value="PENDING">{tr('Pending')}</option>
               </Select>
-              <Select aria-label="Fraud filter" value={fraud} onChange={(e) => update({ fraud: e.target.value })}>
-                <option value="">All predictions</option>
-                <option value="fraud">Fraud</option>
-                <option value="legit">Legit</option>
-                <option value="pending">Pending</option>
+              <Select
+                aria-label={tr('Fraud filter')}
+                value={fraud}
+                onChange={(e) => update({ fraud: e.target.value })}
+              >
+                <option value="">{tr('All predictions')}</option>
+                <option value="fraud">{tr('Fraud')}</option>
+                <option value="legit">{tr('Legit')}</option>
+                <option value="pending">{tr('Pending')}</option>
               </Select>
               <Button type="submit" size="sm" variant="secondary">
-                Search
+                {tr('Search')}
               </Button>
               {hasFilters && (
-                <Link to="/app/transactions" className="text-sm font-semibold text-p-primary" onClick={() => setSearchDraft('')}>
-                  Clear
+                <Link
+                  to="/app/transactions"
+                  className="text-sm font-semibold text-p-primary"
+                  onClick={() => setSearchDraft('')}
+                >
+                  {tr('Clear')}
                 </Link>
               )}
             </form>
           }
         >
           {query.data.items.length === 0 ? (
-            <EmptyState icon="📭" title="No transactions found" />
+            <EmptyState icon="📭" title={tr('No transactions found')} />
           ) : (
             <>
               <Table>
                 <thead>
                   <tr>
-                    <Th>ID</Th>
-                    <Th>Type</Th>
-                    <Th>Amount</Th>
-                    <Th>Status</Th>
-                    <Th>Risk Score</Th>
-                    <Th>Risk Level</Th>
-                    <Th>Date</Th>
+                    <Th>{tr('ID')}</Th>
+                    <Th>{tr('Type')}</Th>
+                    <Th>{tr('Amount')}</Th>
+                    <Th>{tr('Status')}</Th>
+                    <Th>{tr('Risk Score')}</Th>
+                    <Th>{tr('Risk Level')}</Th>
+                    <Th>{tr('Date')}</Th>
                     <Th></Th>
                   </tr>
                 </thead>
@@ -117,14 +144,17 @@ export function UserTransactionsPage() {
                   {query.data.items.map((t) => (
                     <tr key={t.id}>
                       <Td className="font-mono text-xs">{t.transactionId}</Td>
-                      <Td>{describeTransaction(t)}</Td>
+                      <Td>{tr(describeTransaction(t))}</Td>
                       <Td className="font-semibold">{formatTsh(t.amount)}</Td>
                       <Td>
                         <StatusBadge status={t.status} />
                       </Td>
                       <Td>
                         {t.fraudScore > 0 ? (
-                          <span className="font-semibold" style={{ color: riskColor(t.fraudScore) }}>
+                          <span
+                            className="font-semibold"
+                            style={{ color: riskColor(t.fraudScore) }}
+                          >
                             {t.fraudScore}%
                           </span>
                         ) : (
@@ -134,10 +164,12 @@ export function UserTransactionsPage() {
                       <Td>
                         <RiskBadge level={t.riskLevel} />
                       </Td>
-                      <Td className="whitespace-nowrap text-p-muted">{formatDate(t.createdAt, 'minute')}</Td>
+                      <Td className="whitespace-nowrap text-p-muted">
+                        {formatDate(t.createdAt, 'minute')}
+                      </Td>
                       <Td>
                         <Button size="sm" variant="ghost" onClick={() => setSelected(t)}>
-                          View
+                          {tr('View')}
                         </Button>
                       </Td>
                     </tr>
@@ -145,7 +177,11 @@ export function UserTransactionsPage() {
                 </tbody>
               </Table>
               <div className="mt-4">
-                <Pagination page={query.data.page} totalPages={query.data.totalPages} onChange={(p) => update({ page: String(p) })} />
+                <Pagination
+                  page={query.data.page}
+                  totalPages={query.data.totalPages}
+                  onChange={(p) => update({ page: String(p) })}
+                />
               </div>
             </>
           )}
@@ -155,9 +191,9 @@ export function UserTransactionsPage() {
       <TransactionDetailsModal transaction={selected} onClose={() => setSelected(null)} />
       <ConfirmDialog
         open={confirmLock}
-        title="Lock transactions?"
-        body="You will need to enter your password again to view them."
-        confirmText="Lock"
+        title={tr('Lock transactions?')}
+        body={tr('You will need to enter your password again to view them.')}
+        confirmText={tr('Lock')}
         onConfirm={() => {
           setConfirmLock(false);
           lock.mutate();

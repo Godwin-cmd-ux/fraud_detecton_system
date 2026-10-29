@@ -1,3 +1,4 @@
+import { useLanguage, translate as tr } from '../../i18n';
 import type { ReactNode } from 'react';
 import { Button } from './Button';
 import { Modal } from './Modal';
@@ -26,24 +27,25 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  useLanguage();
   return (
     <Modal
       open={open}
       onClose={onCancel}
-      title={title}
+      title={tr(title)}
       size="sm"
       footer={
         <>
           <Button variant="secondary" onClick={onCancel} disabled={loading}>
-            {cancelText}
+            {tr(cancelText)}
           </Button>
           <Button variant={danger ? 'danger' : 'primary'} onClick={onConfirm} loading={loading}>
-            {confirmText}
+            {tr(confirmText)}
           </Button>
         </>
       }
     >
-      {typeof body === 'string' ? <p className="whitespace-pre-line">{body}</p> : body}
+      {typeof body === 'string' ? <p className="whitespace-pre-line">{tr(body)}</p> : body}
     </Modal>
   );
 }

@@ -1,8 +1,10 @@
+import { useLanguage, translate as tr } from '../../i18n';
 import { useNavigate } from 'react-router';
 import { useLogout, useMe } from '../../api/auth';
 import { SidebarShell } from '../../components/layout/SidebarShell';
 
 export function UserLayout() {
+  useLanguage();
   const me = useMe();
   const logout = useLogout();
   const navigate = useNavigate();
@@ -10,7 +12,7 @@ export function UserLayout() {
   return (
     <SidebarShell
       brand="🛡️ FraudDetect"
-      subtitle="Customer Portal"
+      subtitle={tr('Customer Portal')}
       profile={{ initial: name.charAt(0).toUpperCase(), name, role: 'Customer' }}
       items={[
         { to: '/app/dashboard', label: 'Dashboard', icon: '📊' },
@@ -28,8 +30,8 @@ export function UserLayout() {
       ]}
       footer={
         <>
-          <div>Fraud Detection System v2.0</div>
-          <div>🤖 AI-Powered Fraud Detection</div>
+          <div>{tr('Fraud Detection System v2.0')}</div>
+          <div>{tr('🤖 AI-Powered Fraud Detection')}</div>
         </>
       }
     />

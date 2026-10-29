@@ -1,3 +1,4 @@
+import { useLanguage, translate as tr } from '../../../i18n';
 import { adminTransactionsQuerySchema } from '@fraud/shared';
 import { useAdminTransactions } from '../../../api/admin';
 import { Alert } from '../../../components/ui/Alert';
@@ -12,13 +13,14 @@ import {
 import { TransactionsTable } from '../components/TransactionsTable';
 
 export function AdminTransactionsPage() {
+  useLanguage();
   const { params, update } = useMonitoringFilters();
   const parsed = adminTransactionsQuerySchema.safeParse(Object.fromEntries(params));
   const query = useAdminTransactions(parsed.success ? parsed.data : { page: 1 });
   return (
     <div>
-      <MonitoringHeader title="Transaction Monitoring" />
-      <Card title="Transactions">
+      <MonitoringHeader title={tr('Transaction Monitoring')} />
+      <Card title={tr('Transactions')}>
         <MonitoringFilters
           fields={[
             { key: 'search', label: 'Search' },
@@ -29,16 +31,16 @@ export function AdminTransactionsPage() {
           ]}
         />
         {!parsed.success && (
-          <Alert kind="error">Invalid filters. Clear Filters to try again.</Alert>
+          <Alert kind="error">{tr('Invalid filters. Clear Filters to try again.')}</Alert>
         )}
         {query.isPending && <Spinner />}
-        {query.isError && <Alert kind="error">Could not load transactions.</Alert>}
+        {query.isError && <Alert kind="error">{tr('Could not load transactions.')}</Alert>}
         {query.data && (
           <>
             {query.data.items.length ? (
               <TransactionsTable items={query.data.items} />
             ) : (
-              <EmptyState title="No transactions found" />
+              <EmptyState title={tr('No transactions found')} />
             )}
             <Pagination
               page={query.data.page}

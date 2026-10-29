@@ -1,5 +1,7 @@
+import { useLanguage, translate as tr } from '../../i18n';
 import { forwardRef, useId } from 'react';
 import type { InputHTMLAttributes, ReactNode } from 'react';
+import { localizeValidity } from '../../i18n/validation';
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: ReactNode;
@@ -14,13 +16,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   { label, hint, error, id, className = '', ...rest },
   ref,
 ) {
+  useLanguage();
   const autoId = useId();
   const inputId = id ?? autoId;
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
         <label htmlFor={inputId} className="text-sm font-semibold text-p-text">
-          {label}
+          {tr(label)}
         </label>
       )}
       <input
@@ -29,8 +32,20 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         aria-invalid={error ? true : undefined}
         className={`${inputClass} ${error ? 'border-p-danger' : ''} ${className}`}
         {...rest}
+        onInvalid={(event) => {
+          localizeValidity(event.currentTarget);
+          rest.onInvalid?.(event);
+        }}
+        onInput={(event) => {
+          event.currentTarget.setCustomValidity('');
+          rest.onInput?.(event);
+        }}
       />
-      {error ? <p className="text-xs text-p-danger">{error}</p> : hint ? <p className="text-xs text-p-muted">{hint}</p> : null}
+      {error ? (
+        <p className="text-xs text-p-danger">{tr(error)}</p>
+      ) : hint ? (
+        <p className="text-xs text-p-muted">{tr(hint)}</p>
+      ) : null}
     </div>
   );
 });

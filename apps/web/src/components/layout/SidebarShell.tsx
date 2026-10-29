@@ -1,6 +1,8 @@
+import { useLanguage, translate as tr } from '../../i18n';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router';
+import { LanguageSwitcher } from '../../i18n/LanguageSwitcher';
 
 export interface SidebarBadge {
   count: number;
@@ -34,6 +36,7 @@ export interface SidebarShellProps {
 
 /** Fixed 280px dark sidebar with a hamburger below 768px, as the original layout. */
 export function SidebarShell({ brand, subtitle, profile, items, footer }: SidebarShellProps) {
+  useLanguage();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -50,20 +53,24 @@ export function SidebarShell({ brand, subtitle, profile, items, footer }: Sideba
         type="button"
         className="no-print fixed top-3 left-3 z-40 rounded-lg bg-p-darker px-3 py-2 text-sm font-semibold text-white shadow md:hidden"
         onClick={() => setOpen((v) => !v)}
-        aria-label="Toggle menu"
+        aria-label={tr('Toggle menu')}
       >
-        ☰ Menu
+        {tr('☰ Menu')}
       </button>
-      {open && <div className="fixed inset-0 z-20 bg-black/40 md:hidden" onClick={() => setOpen(false)} />}
+      {open && (
+        <div className="fixed inset-0 z-20 bg-black/40 md:hidden" onClick={() => setOpen(false)} />
+      )}
       <aside
         className={`no-print fixed inset-y-0 left-0 z-30 flex w-[280px] flex-col bg-gradient-to-b from-p-darker to-p-dark text-white transition-transform md:static md:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}
       >
         <div className="border-b border-white/10 px-6 py-5">
           <div className="text-xl font-bold">{brand}</div>
-          <div className="text-xs text-white/60">{subtitle}</div>
+          <div className="text-xs text-white/60">{tr(subtitle)}</div>
         </div>
         <div className="flex items-center gap-3 border-b border-white/10 px-6 py-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-p-primary text-lg font-bold">{profile.initial}</div>
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-p-primary text-lg font-bold">
+            {profile.initial}
+          </div>
           <div className="min-w-0">
             <div className="truncate text-sm font-semibold">{profile.name}</div>
             <div className="text-xs text-white/60">{profile.role}</div>
@@ -85,17 +92,26 @@ export function SidebarShell({ brand, subtitle, profile, items, footer }: Sideba
             >
               <span className="flex items-center gap-3">
                 <span aria-hidden="true">{item.icon}</span>
-                {item.label}
+                {tr(item.label)}
               </span>
               {item.badge && item.badge.count > 0 && (
-                <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${badgeTones[item.badge.tone]}`}>{item.badge.count}</span>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-xs font-bold ${badgeTones[item.badge.tone]}`}
+                >
+                  {item.badge.count}
+                </span>
               )}
             </NavLink>
           ))}
         </nav>
-        {footer && <div className="border-t border-white/10 px-6 py-4 text-xs text-white/60">{footer}</div>}
+        {footer && (
+          <div className="border-t border-white/10 px-6 py-4 text-xs text-white/60">{footer}</div>
+        )}
       </aside>
       <main className="min-w-0 flex-1 px-4 pt-16 pb-10 md:px-8 md:pt-8">
+        <div className="mb-4 flex justify-end">
+          <LanguageSwitcher />
+        </div>
         <Outlet />
       </main>
     </div>

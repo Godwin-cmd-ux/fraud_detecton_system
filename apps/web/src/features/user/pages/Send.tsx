@@ -1,3 +1,4 @@
+import { useLanguage, translate as tr } from '../../../i18n';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { FRAUD } from '@fraud/shared';
@@ -22,6 +23,7 @@ interface Pending {
 }
 
 export function SendPage() {
+  useLanguage();
   const me = useMe();
   const [receiverId, setReceiverId] = useState('');
   const context = useSendContext(receiverId ? Number(receiverId) : undefined);
@@ -46,7 +48,8 @@ export function SendPage() {
     const value = Number(amount);
     if (!receiverId) return 'Please select a receiver';
     if (!Number.isFinite(value) || value <= 0) return 'Please enter a valid amount greater than 0';
-    if (value > ctx.balance) return `Insufficient balance. Your balance is ${formatTsh(ctx.balance)}`;
+    if (value > ctx.balance)
+      return `Insufficient balance. Your balance is ${formatTsh(ctx.balance)}`;
 
     const queue: Pending[] = [];
     const { largeVolume, receivers, senders } = ctx;
@@ -84,7 +87,10 @@ export function SendPage() {
         danger: true,
       });
     }
-    queue.push({ title: 'Confirm transfer', body: `You are about to send ${formatTsh(value)} to the selected recipient. Continue?` });
+    queue.push({
+      title: 'Confirm transfer',
+      body: `You are about to send ${formatTsh(value)} to the selected recipient. Continue?`,
+    });
     return queue;
   }
 
@@ -107,7 +113,12 @@ export function SendPage() {
     }
     setConfirmQueue([]);
     transfer.mutate(
-      { receiverId: Number(receiverId), amount: Number(amount), location: location as Location, message: message || undefined },
+      {
+        receiverId: Number(receiverId),
+        amount: Number(amount),
+        location: location as Location,
+        message: message || undefined,
+      },
       {
         onSuccess: (r) => {
           setResult(r);
@@ -134,49 +145,70 @@ export function SendPage() {
 
   return (
     <div>
-      <TopHeader title="Send Money" subtitle="Transfer funds to other users" name={name} hint="Making a transfer" />
+      <TopHeader
+        title={tr('Send Money')}
+        subtitle={tr('Transfer funds to other users')}
+        name={name}
+        hint={tr('Making a transfer')}
+      />
 
       <div className="mx-auto max-w-2xl rounded-card border border-p-border bg-white p-6 shadow-sm">
         {blocked && (
-          <BlockedPanel title="🚫 TRANSACTION BLOCKED" reason="This transaction was blocked by our fraud detection system." details={blocked.message} />
+          <BlockedPanel
+            title={tr('🚫 TRANSACTION BLOCKED')}
+            reason="This transaction was blocked by our fraud detection system."
+            details={blocked.message}
+          />
         )}
 
         {result?.outcome === 'success' && (
           <Alert kind="success" className="mb-4">
-            {result.message}
+            {tr(result.message)}
             {result.flaggedForReview && (
-              <div className="mt-2 border-t border-[#065f46]/20 pt-2">⚠️ This transaction was flagged for review. Please monitor your account.</div>
+              <div className="mt-2 border-t border-[#065f46]/20 pt-2">
+                {tr('⚠️ This transaction was flagged for review. Please monitor your account.')}
+              </div>
             )}
           </Alert>
         )}
 
         {error && !blocked && (
           <Alert kind="error" className="mb-4">
-            {error}
+            {tr(error)}
           </Alert>
         )}
 
         {result?.locationWarning && (
           <div className="mb-4 rounded-lg border-l-4 border-[#dc2626] bg-[#fee2e2] p-4">
-            <div className="font-semibold text-[#991b1b]">🚨 Location Change Detected</div>
-            <div className="mt-1 text-sm text-[#7f1d1d]">{result.locationWarning}</div>
+            <div className="font-semibold text-[#991b1b]">{tr('🚨 Location Change Detected')}</div>
+            <div className="mt-1 text-sm text-[#7f1d1d]">{tr(result.locationWarning)}</div>
           </div>
         )}
 
         {ctx && ctx.largeVolume.count >= 2 && !ctx.largeVolume.blocked && !blocked && (
           <Alert kind="warning" className="mb-4">
-            You have made <strong>{ctx.largeVolume.count}</strong> large transactions (&gt;1M TSh) totaling <strong>{formatTsh(ctx.largeVolume.totalAmount)}</strong> in the last 5 minutes.{' '}
-            <strong>Limit is 3 transactions totaling 10,000,000 TSh.</strong>
+            {tr('You have made ')}
+            <strong>{ctx.largeVolume.count}</strong>
+            {tr(' large transactions (>1M TSh) totaling ')}
+            <strong>{formatTsh(ctx.largeVolume.totalAmount)}</strong>
+            {tr(' in the last 5 minutes.')}
+            {tr(' ')}
+            <strong>{tr('Limit is 3 transactions totaling 10,000,000 TSh.')}</strong>
           </Alert>
         )}
 
         {context.isPending && <Spinner />}
-        {context.isError && <Alert kind="error">Could not load the transfer form.</Alert>}
+        {context.isError && <Alert kind="error">{tr('Could not load the transfer form.')}</Alert>}
 
         {ctx && !blocked && (
           <form onSubmit={onSubmit} className="flex flex-col gap-4">
-            <Select label="Select Receiver *" value={receiverId} onChange={(e) => setReceiverId(e.target.value)} required>
-              <option value="">-- Select a user --</option>
+            <Select
+              label={tr('Select Receiver *')}
+              value={receiverId}
+              onChange={(e) => setReceiverId(e.target.value)}
+              required
+            >
+              <option value="">{tr('-- Select a user --')}</option>
               {ctx.recipients.map((r) => (
                 <option key={r.id} value={r.id}>
                   {r.fullName} - {r.email}
@@ -184,10 +216,10 @@ export function SendPage() {
               ))}
             </Select>
             <Select
-              label="Transaction Location *"
+              label={tr('Transaction Location *')}
               value={location}
               onChange={(e) => setLocation(e.target.value as Location)}
-              hint="Select your current location for fraud detection"
+              hint={tr('Select your current location for fraud detection')}
               required
             >
               {ctx.locations.map((l) => (
@@ -197,23 +229,30 @@ export function SendPage() {
               ))}
             </Select>
             <Input
-              label="Amount (TSh) *"
+              label={tr('Amount (TSh) *')}
               type="number"
               step="0.01"
               min="0.01"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="Enter amount in Tanzanian Shillings"
-              hint={`Available balance: ${formatTsh(ctx.balance)}`}
+              placeholder={tr('Enter amount in Tanzanian Shillings')}
+              hint={tr(`Available balance: ${formatTsh(ctx.balance)}`)}
               required
             />
-            <Textarea label="Message (Optional)" rows={3} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Add a reference or note..." maxLength={500} />
+            <Textarea
+              label={tr('Message (Optional)')}
+              rows={3}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder={tr('Add a reference or note...')}
+              maxLength={500}
+            />
             <div className="flex gap-2">
               <Button type="submit" loading={transfer.isPending}>
-                Send Money
+                {tr('Send Money')}
               </Button>
               <Button variant="secondary" onClick={reset}>
-                Reset
+                {tr('Reset')}
               </Button>
             </div>
           </form>
@@ -222,9 +261,9 @@ export function SendPage() {
 
       <ConfirmDialog
         open={current !== undefined}
-        title={current?.title ?? ''}
-        body={current?.body}
-        confirmText="Continue"
+        title={tr(current?.title ?? '')}
+        body={tr(current?.body)}
+        confirmText={tr('Continue')}
         danger={current?.danger}
         loading={transfer.isPending}
         onConfirm={onConfirm}

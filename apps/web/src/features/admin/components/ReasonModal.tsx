@@ -1,3 +1,4 @@
+import { useLanguage, translate as tr } from '../../../i18n';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Button } from '../../../components/ui/Button';
@@ -17,19 +18,30 @@ export interface ReasonModalProps {
 }
 
 /** Approve / reject dialog with an optional or required reason field. */
-export function ReasonModal({ open, title, body, reasonRequired, confirmText, danger, loading, onConfirm, onCancel }: ReasonModalProps) {
+export function ReasonModal({
+  open,
+  title,
+  body,
+  reasonRequired,
+  confirmText,
+  danger,
+  loading,
+  onConfirm,
+  onCancel,
+}: ReasonModalProps) {
+  useLanguage();
   const [reason, setReason] = useState('');
   const disabled = reasonRequired && reason.trim().length === 0;
   return (
     <Modal
       open={open}
       onClose={onCancel}
-      title={title}
+      title={tr(title)}
       size="sm"
       footer={
         <>
           <Button variant="secondary" onClick={onCancel} disabled={loading}>
-            Cancel
+            {tr('Cancel')}
           </Button>
           <Button
             variant={danger ? 'danger' : 'success'}
@@ -40,18 +52,18 @@ export function ReasonModal({ open, title, body, reasonRequired, confirmText, da
             disabled={disabled}
             loading={loading}
           >
-            {confirmText}
+            {tr(confirmText)}
           </Button>
         </>
       }
     >
-      {body && <div className="mb-3">{body}</div>}
+      {body && <div className="mb-3">{tr(body)}</div>}
       <Textarea
-        label={reasonRequired ? 'Reason (required)' : 'Reason (optional)'}
+        label={tr(reasonRequired ? 'Reason (required)' : 'Reason (optional)')}
         rows={3}
         value={reason}
         onChange={(e) => setReason(e.target.value)}
-        placeholder="Add a note for the audit log"
+        placeholder={tr('Add a note for the audit log')}
       />
     </Modal>
   );

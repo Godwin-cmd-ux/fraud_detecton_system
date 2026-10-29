@@ -1,3 +1,4 @@
+import { useLanguage, translate as tr } from '../../../i18n';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import type { AdminUserRow } from '@fraud/shared';
@@ -18,14 +19,24 @@ import { UserActionButtons, UserViewModal, statusLabel } from '../components/Use
 
 const ACTION_TEXT: Record<UserAction, { title: (n: string) => string; body: string }> = {
   approve: { title: (n) => `Approve ${n}?`, body: 'The user will be able to sign in.' },
-  disapprove: { title: (n) => `Disapprove ${n}?`, body: 'The user will no longer be able to sign in until approved again.' },
+  disapprove: {
+    title: (n) => `Disapprove ${n}?`,
+    body: 'The user will no longer be able to sign in until approved again.',
+  },
   activate: { title: (n) => `Activate ${n}?`, body: 'The account will be reactivated.' },
-  deactivate: { title: (n) => `Deactivate ${n}?`, body: 'The user will be signed out and unable to sign in.' },
+  deactivate: {
+    title: (n) => `Deactivate ${n}?`,
+    body: 'The user will be signed out and unable to sign in.',
+  },
 };
 
-type Pending = { kind: 'action'; action: UserAction; user: AdminUserRow } | { kind: 'delete'; user: AdminUserRow } | null;
+type Pending =
+  | { kind: 'action'; action: UserAction; user: AdminUserRow }
+  | { kind: 'delete'; user: AdminUserRow }
+  | null;
 
 export function AdminUsersPage() {
+  useLanguage();
   const me = useMe();
   const [params, setParams] = useSearchParams();
   const search = params.get('search') ?? '';
@@ -52,8 +63,13 @@ export function AdminUsersPage() {
     if (!pending) return;
     const done = (r: { message: string }) => setFlash({ kind: 'success', text: r.message });
     const fail = (e: Error) => setFlash({ kind: 'error', text: e.message });
-    if (pending.kind === 'delete') remove.mutate(pending.user.id, { onSuccess: done, onError: fail });
-    else action.mutate({ id: pending.user.id, action: pending.action }, { onSuccess: done, onError: fail });
+    if (pending.kind === 'delete')
+      remove.mutate(pending.user.id, { onSuccess: done, onError: fail });
+    else
+      action.mutate(
+        { id: pending.user.id, action: pending.action },
+        { onSuccess: done, onError: fail },
+      );
     setPending(null);
     setViewing(null);
   }
@@ -63,15 +79,20 @@ export function AdminUsersPage() {
 
   return (
     <div>
-      <TopHeader title="User Management" subtitle="View and manage all registered users" name={name} hint="Administrator" />
+      <TopHeader
+        title={tr('User Management')}
+        subtitle={tr('View and manage all registered users')}
+        name={name}
+        hint={tr('Administrator')}
+      />
       {flash && (
         <Alert kind={flash.kind} className="mb-4">
-          {flash.text}
+          {tr(flash.text)}
         </Alert>
       )}
 
       <Card
-        title="All Users"
+        title={tr('All Users')}
         actions={
           <form
             className="flex items-end gap-2"
@@ -80,35 +101,46 @@ export function AdminUsersPage() {
               update({ search: draft });
             }}
           >
-            <Input aria-label="Search users" placeholder="Search name, email or phone" value={draft} onChange={(e) => setDraft(e.target.value)} />
+            <Input
+              aria-label={tr('Search users')}
+              placeholder={tr('Search name, email or phone')}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+            />
             <Button type="submit" size="sm" variant="secondary">
-              Search
+              {tr('Search')}
             </Button>
             {search && (
-              <Link to="/admin/users" className="text-sm font-semibold text-p-primary" onClick={() => setDraft('')}>
-                Clear
+              <Link
+                to="/admin/users"
+                className="text-sm font-semibold text-p-primary"
+                onClick={() => setDraft('')}
+              >
+                {tr('Clear')}
               </Link>
             )}
           </form>
         }
       >
         {users.isPending && <Spinner />}
-        {users.isError && <Alert kind="error">Could not load users.</Alert>}
-        {users.data && users.data.items.length === 0 && <EmptyState icon="👥" title="No users found" />}
+        {users.isError && <Alert kind="error">{tr('Could not load users.')}</Alert>}
+        {users.data && users.data.items.length === 0 && (
+          <EmptyState icon="👥" title={tr('No users found')} />
+        )}
         {users.data && users.data.items.length > 0 && (
           <>
             <Table>
               <thead>
                 <tr>
-                  <Th>ID</Th>
-                  <Th>Full Name</Th>
-                  <Th>Email</Th>
-                  <Th>Phone</Th>
-                  <Th>Balance</Th>
-                  <Th>Card</Th>
-                  <Th>Status</Th>
-                  <Th>Created</Th>
-                  <Th>Actions</Th>
+                  <Th>{tr('ID')}</Th>
+                  <Th>{tr('Full Name')}</Th>
+                  <Th>{tr('Email')}</Th>
+                  <Th>{tr('Phone')}</Th>
+                  <Th>{tr('Balance')}</Th>
+                  <Th>{tr('Card')}</Th>
+                  <Th>{tr('Status')}</Th>
+                  <Th>{tr('Created')}</Th>
+                  <Th>{tr('Actions')}</Th>
                 </tr>
               </thead>
               <tbody>
@@ -124,19 +156,23 @@ export function AdminUsersPage() {
                       <Td className="font-mono text-xs">****{u.cardLast4}</Td>
                       <Td>
                         <div className="font-semibold" style={{ color: s.color }}>
-                          {s.text}
+                          {tr(s.text)}
                         </div>
-                        <div className="text-xs text-p-muted">{s.sub}</div>
+                        <div className="text-xs text-p-muted">{tr(s.sub)}</div>
                       </Td>
                       <Td className="text-p-muted">{formatDate(u.createdAt, 'date')}</Td>
                       <Td>
                         <div className="flex flex-wrap gap-1.5">
-                          <UserActionButtons user={u} onAction={(a) => setPending({ kind: 'action', action: a, user: u })} onDelete={() => setPending({ kind: 'delete', user: u })} />
+                          <UserActionButtons
+                            user={u}
+                            onAction={(a) => setPending({ kind: 'action', action: a, user: u })}
+                            onDelete={() => setPending({ kind: 'delete', user: u })}
+                          />
                           <Link to={`/admin/users/${u.id}/balance`}>
-                            <Button size="sm">💰 Add Balance</Button>
+                            <Button size="sm">{tr('💰 Add Balance')}</Button>
                           </Link>
                           <Button size="sm" variant="ghost" onClick={() => setViewing(u)}>
-                            👁️ View
+                            {tr('👁️ View')}
                           </Button>
                         </div>
                       </Td>
@@ -146,7 +182,11 @@ export function AdminUsersPage() {
               </tbody>
             </Table>
             <div className="mt-4">
-              <Pagination page={users.data.page} totalPages={users.data.totalPages} onChange={(p) => update({ page: String(p) })} />
+              <Pagination
+                page={users.data.page}
+                totalPages={users.data.totalPages}
+                onChange={(p) => update({ page: String(p) })}
+              />
             </div>
           </>
         )}
@@ -160,16 +200,26 @@ export function AdminUsersPage() {
       />
       <ConfirmDialog
         open={pending !== null}
-        title={pending ? (pending.kind === 'delete' ? `Delete ${pending.user.fullName}?` : ACTION_TEXT[pending.action].title(pending.user.fullName)) : ''}
-        body={
+        title={tr(
+          pending
+            ? pending.kind === 'delete'
+              ? `Delete ${pending.user.fullName}?`
+              : ACTION_TEXT[pending.action].title(pending.user.fullName)
+            : '',
+        )}
+        body={tr(
           pending
             ? pending.kind === 'delete'
               ? `⚠️ This action is permanent and cannot be undone.\n\n${pending.user.fullName} (${pending.user.email}) will be removed.`
               : ACTION_TEXT[pending.action].body
-            : ''
+            : '',
+        )}
+        confirmText={tr(pending?.kind === 'delete' ? 'Delete' : 'Confirm')}
+        danger={
+          pending?.kind === 'delete' ||
+          pending?.action === 'deactivate' ||
+          pending?.action === 'disapprove'
         }
-        confirmText={pending?.kind === 'delete' ? 'Delete' : 'Confirm'}
-        danger={pending?.kind === 'delete' || pending?.action === 'deactivate' || pending?.action === 'disapprove'}
         loading={busy}
         onConfirm={run}
         onCancel={() => setPending(null)}

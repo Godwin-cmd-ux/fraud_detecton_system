@@ -1,3 +1,4 @@
+import { useLanguage, translate as tr } from '../../../i18n';
 import { useSearchParams } from 'react-router';
 import { useMe } from '../../../api/auth';
 import { TopHeader } from '../../../components/layout/TopHeader';
@@ -6,8 +7,9 @@ import { Select } from '../../../components/ui/Select';
 import { Button } from '../../../components/ui/Button';
 
 export function MonitoringHeader({ title }: { title: string }) {
+  useLanguage();
   const me = useMe();
-  return <TopHeader title={title} name={me.data?.name ?? 'Administrator'} />;
+  return <TopHeader title={tr(title)} name={me.data?.name ?? 'Administrator'} />;
 }
 
 export function useMonitoringFilters() {
@@ -32,28 +34,29 @@ export function MonitoringFilters({
 }: {
   fields: { key: string; label: string; options?: readonly string[]; type?: string }[];
 }) {
+  useLanguage();
   const { params, update, clear } = useMonitoringFilters();
   return (
     <div className="mb-4 flex flex-wrap items-end gap-3">
       {fields.map(({ key, label, options, type }) => (
         <label key={key} className="text-sm font-semibold">
-          {label}
+          {tr(label)}
           {options ? (
             <Select
-              aria-label={label}
+              aria-label={tr(label)}
               value={params.get(key) ?? (key === 'reviewed' ? 'unreviewed' : '')}
               onChange={(e) => update(key, e.target.value)}
             >
-              {key !== 'reviewed' && <option value="">All</option>}
+              {key !== 'reviewed' && <option value="">{tr('All')}</option>}
               {options.map((option) => (
                 <option key={option} value={option}>
-                  {option}
+                  {tr(option)}
                 </option>
               ))}
             </Select>
           ) : (
             <Input
-              aria-label={label}
+              aria-label={tr(label)}
               type={type ?? 'text'}
               value={params.get(key) ?? ''}
               onChange={(e) => update(key, e.target.value)}
@@ -62,7 +65,7 @@ export function MonitoringFilters({
         </label>
       ))}
       <Button variant="secondary" onClick={clear}>
-        Clear Filters
+        {tr('Clear Filters')}
       </Button>
     </div>
   );

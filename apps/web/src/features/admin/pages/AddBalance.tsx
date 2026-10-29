@@ -1,3 +1,4 @@
+import { useLanguage, translate as tr } from '../../../i18n';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, Navigate, useParams } from 'react-router';
@@ -25,6 +26,7 @@ export const ADJUSTMENT_LABELS: Record<AdjustmentType, string> = {
 };
 
 export function AddBalancePage() {
+  useLanguage();
   const me = useMe();
   const { id } = useParams();
   const userId = Number(id);
@@ -74,94 +76,117 @@ export function AddBalancePage() {
 
   return (
     <div>
-      <TopHeader title="Add Balance to Account" subtitle={`Manage user funds: ${u.fullName}`} name={name} hint="Administrator" />
+      <TopHeader
+        title={tr('Add Balance to Account')}
+        subtitle={tr(`Manage user funds: ${u.fullName}`)}
+        name={name}
+        hint={tr('Administrator')}
+      />
       <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
         <div className="flex flex-col gap-6">
-          <Card title="Customer">
+          <Card title={tr('Customer')}>
             <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-              <dt className="text-p-muted">Name</dt>
+              <dt className="text-p-muted">{tr('Name')}</dt>
               <dd className="font-semibold">{u.fullName}</dd>
-              <dt className="text-p-muted">Email</dt>
+              <dt className="text-p-muted">{tr('Email')}</dt>
               <dd>{u.email}</dd>
-              <dt className="text-p-muted">Phone</dt>
+              <dt className="text-p-muted">{tr('Phone')}</dt>
               <dd>{u.phone}</dd>
-              <dt className="text-p-muted">Current Balance</dt>
+              <dt className="text-p-muted">{tr('Current Balance')}</dt>
               <dd className="text-lg font-bold text-p-primary">{formatTsh(u.balance)}</dd>
             </dl>
-            <Link to="/admin/users" className="mt-4 inline-block text-sm font-semibold text-p-primary">
-              ← Back to Users
+            <Link
+              to="/admin/users"
+              className="mt-4 inline-block text-sm font-semibold text-p-primary"
+            >
+              {tr('← Back to Users')}
             </Link>
           </Card>
 
-          <Card title="Add funds">
+          <Card title={tr('Add funds')}>
             {message && (
               <Alert kind="success" className="mb-4">
-                {message}
+                {tr(message)}
               </Alert>
             )}
             {error && (
               <Alert kind="error" className="mb-4">
-                {error}
+                {tr(error)}
               </Alert>
             )}
             <form onSubmit={onSubmit} className="flex flex-col gap-4">
               <Input
-                label="Amount (TSh) *"
+                label={tr('Amount (TSh) *')}
                 type="number"
                 step="0.01"
                 min="1"
                 max={FRAUD.MAX_ADMIN_ADJUSTMENT}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                hint="Min: TSh 1 | Max: TSh 10,000,000 per transaction"
+                hint={tr('Min: TSh 1 | Max: TSh 10,000,000 per transaction')}
                 required
               />
-              <Select label="Transaction Type *" value={type} onChange={(e) => setType(e.target.value as AdjustmentType)}>
+              <Select
+                label={tr('Transaction Type *')}
+                value={type}
+                onChange={(e) => setType(e.target.value as AdjustmentType)}
+              >
                 {ADJUSTMENT_TYPES.map((t) => (
                   <option key={t} value={t}>
-                    {ADJUSTMENT_LABELS[t]}
+                    {tr(ADJUSTMENT_LABELS[t])}
                   </option>
                 ))}
               </Select>
-              <Textarea label="Reason *" rows={3} value={reason} onChange={(e) => setReason(e.target.value)} hint="At least 10 characters; recorded in the audit log" required />
+              <Textarea
+                label={tr('Reason *')}
+                rows={3}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                hint={tr('At least 10 characters; recorded in the audit log')}
+                required
+              />
               <div className="rounded-lg bg-p-bg p-4 text-sm">
-                <div className="mb-2 font-bold text-p-dark">Preview</div>
+                <div className="mb-2 font-bold text-p-dark">{tr('Preview')}</div>
                 <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
-                  <dt className="text-p-muted">Customer</dt>
+                  <dt className="text-p-muted">{tr('Customer')}</dt>
                   <dd>{u.fullName}</dd>
-                  <dt className="text-p-muted">Current Balance</dt>
+                  <dt className="text-p-muted">{tr('Current Balance')}</dt>
                   <dd>{formatTsh(u.balance)}</dd>
-                  <dt className="text-p-muted">Amount to Add</dt>
+                  <dt className="text-p-muted">{tr('Amount to Add')}</dt>
                   <dd className="text-p-success">+{formatTsh(value)}</dd>
-                  <dt className="text-p-muted">New Balance</dt>
+                  <dt className="text-p-muted">{tr('New Balance')}</dt>
                   <dd className="font-bold">{formatTsh(u.balance + value)}</dd>
                 </dl>
               </div>
               <Button type="submit" variant="success" loading={add.isPending}>
-                💰 Add Balance
+                {tr('💰 Add Balance')}
               </Button>
             </form>
           </Card>
         </div>
 
-        <Card title="Recent Balance Adjustments">
+        <Card title={tr('Recent Balance Adjustments')}>
           {adjustments.isPending && <Spinner />}
-          {adjustments.data && adjustments.data.length === 0 && <EmptyState icon="📭" title="No adjustments yet" />}
+          {adjustments.data && adjustments.data.length === 0 && (
+            <EmptyState icon="📭" title={tr('No adjustments yet')} />
+          )}
           {adjustments.data && adjustments.data.length > 0 && (
             <Table>
               <thead>
                 <tr>
-                  <Th>Date</Th>
-                  <Th>Transaction ID</Th>
-                  <Th>Amount</Th>
-                  <Th>Type</Th>
-                  <Th>Reason</Th>
+                  <Th>{tr('Date')}</Th>
+                  <Th>{tr('Transaction ID')}</Th>
+                  <Th>{tr('Amount')}</Th>
+                  <Th>{tr('Type')}</Th>
+                  <Th>{tr('Reason')}</Th>
                 </tr>
               </thead>
               <tbody>
                 {adjustments.data.map((a) => (
                   <tr key={a.id}>
-                    <Td className="whitespace-nowrap text-p-muted">{formatDate(a.createdAt, 'minute')}</Td>
+                    <Td className="whitespace-nowrap text-p-muted">
+                      {formatDate(a.createdAt, 'minute')}
+                    </Td>
                     <Td className="font-mono text-xs">{a.transactionId}</Td>
                     <Td className="font-semibold text-p-success">+{formatTsh(a.amount)}</Td>
                     <Td>
@@ -178,9 +203,11 @@ export function AddBalancePage() {
 
       <ConfirmDialog
         open={confirming}
-        title="Confirm balance adjustment"
-        body={`Add ${formatTsh(value)} (${ADJUSTMENT_LABELS[type]}) to ${u.fullName}'s account?\n\nReason: ${reason.trim()}\nNew balance: ${formatTsh(u.balance + value)}`}
-        confirmText="Add Balance"
+        title={tr('Confirm balance adjustment')}
+        body={tr(
+          `Add ${formatTsh(value)} (${ADJUSTMENT_LABELS[type]}) to ${u.fullName}'s account?\n\nReason: ${reason.trim()}\nNew balance: ${formatTsh(u.balance + value)}`,
+        )}
+        confirmText={tr('Add Balance')}
         onConfirm={submit}
         onCancel={() => setConfirming(false)}
       />

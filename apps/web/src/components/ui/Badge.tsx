@@ -1,3 +1,4 @@
+import { useLanguage, translate as tr } from '../../i18n';
 import type { ReactNode } from 'react';
 import type { RiskLevel, TransactionStatus } from '@fraud/shared';
 
@@ -12,27 +13,45 @@ const tones: Record<BadgeTone, string> = {
   dark: 'bg-p-dark text-white',
 };
 
-export function Badge({ tone = 'gray', children, className = '' }: { tone?: BadgeTone; children: ReactNode; className?: string }) {
+export function Badge({
+  tone = 'gray',
+  children,
+  className = '',
+}: {
+  tone?: BadgeTone;
+  children: ReactNode;
+  className?: string;
+}) {
+  useLanguage();
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${tones[tone]} ${className}`}>
-      {children}
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${tones[tone]} ${className}`}
+    >
+      {tr(children)}
     </span>
   );
 }
 
 export function StatusBadge({ status }: { status: TransactionStatus }) {
+  useLanguage();
   const tone: BadgeTone = status === 'SUCCESS' ? 'green' : status === 'ABORTED' ? 'red' : 'amber';
-  return <Badge tone={tone}>{status}</Badge>;
+  return <Badge tone={tone}>{tr(status)}</Badge>;
 }
 
 /** Risk level with a PENDING fallback when no level is stored. */
 export function RiskBadge({ level }: { level: RiskLevel | null | undefined }) {
-  if (!level) return <Badge tone="gray">PENDING</Badge>;
+  useLanguage();
+  if (!level) return <Badge tone="gray">{tr('PENDING')}</Badge>;
   const tone: BadgeTone = level === 'HIGH' ? 'red' : level === 'MEDIUM' ? 'amber' : 'green';
-  return <Badge tone={tone}>{level}</Badge>;
+  return <Badge tone={tone}>{tr(level)}</Badge>;
 }
 
-export function PredictionBadge({ prediction }: { prediction: 'FRAUD' | 'LEGIT' | 'PENDING' | null | undefined }) {
-  if (!prediction || prediction === 'PENDING') return <Badge tone="gray">PENDING</Badge>;
-  return <Badge tone={prediction === 'FRAUD' ? 'red' : 'green'}>{prediction}</Badge>;
+export function PredictionBadge({
+  prediction,
+}: {
+  prediction: 'FRAUD' | 'LEGIT' | 'PENDING' | null | undefined;
+}) {
+  useLanguage();
+  if (!prediction || prediction === 'PENDING') return <Badge tone="gray">{tr('PENDING')}</Badge>;
+  return <Badge tone={prediction === 'FRAUD' ? 'red' : 'green'}>{tr(prediction)}</Badge>;
 }

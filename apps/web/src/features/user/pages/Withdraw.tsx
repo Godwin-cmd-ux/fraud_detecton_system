@@ -1,3 +1,4 @@
+import { useLanguage, translate as tr } from '../../../i18n';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { FRAUD } from '@fraud/shared';
@@ -18,6 +19,7 @@ import { BlockedPanel } from '../components/BlockedPanel';
 const LOCKED_REASON = 'You have exceeded the number of failed withdrawal attempts.';
 
 export function WithdrawPage() {
+  useLanguage();
   const me = useMe();
   const context = useWithdrawContext();
   const withdraw = useWithdraw();
@@ -72,15 +74,24 @@ export function WithdrawPage() {
 
   return (
     <div>
-      <TopHeader title="Withdraw" subtitle="Withdraw funds from your account" name={name} hint="Making a withdrawal" />
+      <TopHeader
+        title={tr('Withdraw')}
+        subtitle={tr('Withdraw funds from your account')}
+        name={name}
+        hint={tr('Making a withdrawal')}
+      />
 
       <div className="mx-auto max-w-2xl rounded-card border border-p-border bg-white p-6 shadow-sm">
         {blocked && (
-          <BlockedPanel title="🚫 WITHDRAWAL BLOCKED" reason="This withdrawal was blocked by our fraud detection system." details={blocked.message} />
+          <BlockedPanel
+            title={tr('🚫 WITHDRAWAL BLOCKED')}
+            reason="This withdrawal was blocked by our fraud detection system."
+            details={blocked.message}
+          />
         )}
         {lockedOut && (
           <BlockedPanel
-            title="🚫 WITHDRAWALS BLOCKED"
+            title={tr('🚫 WITHDRAWALS BLOCKED')}
             reason={LOCKED_REASON}
             details={`You have ${ctx.failedAttempts} consecutive failed withdrawal attempts. Withdrawals are temporarily blocked. Please contact support to unblock your account.`}
           />
@@ -88,37 +99,43 @@ export function WithdrawPage() {
 
         {result?.outcome === 'success' && (
           <Alert kind="success" className="mb-4">
-            {result.message}
+            {tr(result.message)}
           </Alert>
         )}
         {result?.outcome === 'failed' && (
           <Alert kind="error" className="mb-4">
-            {result.message}
+            {tr(result.message)}
             <div className="mt-1 text-xs">
-              Failed attempts: {result.failedAttempts}/{FRAUD.FAILED_WITHDRAWAL_BLOCK_COUNT}
+              {tr('Failed attempts: ')}
+              {result.failedAttempts}/{FRAUD.FAILED_WITHDRAWAL_BLOCK_COUNT}
             </div>
           </Alert>
         )}
         {error && (
           <Alert kind="error" className="mb-4">
-            {error}
+            {tr(error)}
           </Alert>
         )}
 
         {context.isPending && <Spinner />}
-        {context.isError && <Alert kind="error">Could not load the withdrawal form.</Alert>}
+        {context.isError && <Alert kind="error">{tr('Could not load the withdrawal form.')}</Alert>}
 
         {ctx && !blocked && !lockedOut && (
           <>
             <Alert kind="info" className="mb-4">
               <ul className="list-inside list-disc">
-                <li>Minimum withdrawal: TSh 1,000</li>
-                <li>Funds are deducted from your balance immediately</li>
-                <li>Keep your receipt for your records</li>
+                <li>{tr('Minimum withdrawal: TSh 1,000')}</li>
+                <li>{tr('Funds are deducted from your balance immediately')}</li>
+                <li>{tr('Keep your receipt for your records')}</li>
               </ul>
             </Alert>
             <form onSubmit={onSubmit} className="flex flex-col gap-4">
-              <Select label="Location *" value={location} onChange={(e) => setLocation(e.target.value as Location)} required>
+              <Select
+                label={tr('Location *')}
+                value={location}
+                onChange={(e) => setLocation(e.target.value as Location)}
+                required
+              >
                 {ctx.locations.map((l) => (
                   <option key={l} value={l}>
                     {l}
@@ -126,20 +143,26 @@ export function WithdrawPage() {
                 ))}
               </Select>
               <Input
-                label="Amount (TSh) *"
+                label={tr('Amount (TSh) *')}
                 type="number"
                 step="0.01"
                 min={FRAUD.MIN_WITHDRAWAL}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder="Minimum TSh 1,000"
-                hint={`Available balance: ${formatTsh(ctx.balance)}`}
+                placeholder={tr('Minimum TSh 1,000')}
+                hint={tr(`Available balance: ${formatTsh(ctx.balance)}`)}
                 required
               />
-              <Textarea label="Reason/Reference (Optional)" rows={2} value={message} onChange={(e) => setMessage(e.target.value)} maxLength={500} />
+              <Textarea
+                label={tr('Reason/Reference (Optional)')}
+                rows={2}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                maxLength={500}
+              />
               <div className="flex gap-2">
                 <Button type="submit" variant="success" loading={withdraw.isPending}>
-                  Withdraw
+                  {tr('Withdraw')}
                 </Button>
                 <Button
                   variant="secondary"
@@ -149,7 +172,7 @@ export function WithdrawPage() {
                     setError('');
                   }}
                 >
-                  Reset
+                  {tr('Reset')}
                 </Button>
               </div>
             </form>
@@ -159,9 +182,9 @@ export function WithdrawPage() {
 
       <ConfirmDialog
         open={confirming}
-        title="Confirm withdrawal"
-        body={confirmBody}
-        confirmText="Continue"
+        title={tr('Confirm withdrawal')}
+        body={tr(confirmBody)}
+        confirmText={tr('Continue')}
         danger={!!ctx && ctx.failedAttempts >= 2}
         onConfirm={onConfirm}
         onCancel={() => setConfirming(false)}

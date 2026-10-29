@@ -1,3 +1,4 @@
+import { useLanguage } from '../i18n';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
@@ -16,6 +17,7 @@ export function makeQueryClient(): QueryClient {
 }
 
 export function Providers({ children }: { children: ReactNode }) {
+  useLanguage();
   const [client] = useState(makeQueryClient);
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
