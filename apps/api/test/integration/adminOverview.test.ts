@@ -70,7 +70,8 @@ describe('GET /api/admin/fraud-overview', () => {
         { type: 'withdrawal', total: 1, fraud: 1 },
       ]),
     );
-    expect(res.body.byHour[15]).toEqual({ hour: 15, total: 3, fraud: 2 });
+    // Hour buckets have no date window: today's three plus the ten-day-old legit row (also 15:00 Dar).
+    expect(res.body.byHour[15]).toEqual({ hour: 15, total: 4, fraud: 2 });
     expect(res.body.byHour[2]).toEqual({ hour: 2, total: 1, fraud: 1 });
     expect(res.body.byHour[0]).toEqual({ hour: 0, total: 0, fraud: 0 });
 

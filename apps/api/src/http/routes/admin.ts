@@ -24,6 +24,7 @@ import { listAdmins, listBalanceAdjustments } from '../../modules/admin/balanceA
 import { getCounters } from '../../modules/admin/counters';
 import { getAdminDashboard } from '../../modules/admin/dashboard';
 import { listFraudAlerts } from '../../modules/admin/fraudAlerts';
+import { getFraudOverview } from '../../modules/admin/overview';
 import {
   getAdminTransaction,
   listAdminTransactions,
@@ -205,6 +206,13 @@ export function adminRoutes(deps: AppDeps): Router {
     '/admins',
     wrap(async (_req, res) => {
       res.json(await listAdmins(deps.db));
+    }),
+  );
+
+  r.get(
+    '/fraud-overview',
+    wrap(async (_req, res) => {
+      res.json(await getFraudOverview(deps.db, deps.now()));
     }),
   );
 
