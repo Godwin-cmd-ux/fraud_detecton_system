@@ -2,14 +2,33 @@ import { Router } from 'express';
 import type { Request, RequestHandler } from 'express';
 import {
   addBalanceSchema,
+  adminTransactionsQuerySchema,
+  balanceAdjustmentsQuerySchema,
   createUserSchema,
+  fraudAlertsQuerySchema,
   idParamSchema,
   optionalReasonSchema,
   reasonSchema,
   usersQuerySchema,
 } from '@fraud/shared';
-import type { AddBalanceInput, CreateUserInput, UsersQuery } from '@fraud/shared';
+import type {
+  AddBalanceInput,
+  AdminTransactionsQuery,
+  BalanceAdjustmentsQuery,
+  CreateUserInput,
+  FraudAlertsQuery,
+  UsersQuery,
+} from '@fraud/shared';
 import type { AppDeps } from '../app';
+import { listAdmins, listBalanceAdjustments } from '../../modules/admin/balanceAdjustments';
+import { getCounters } from '../../modules/admin/counters';
+import { getAdminDashboard } from '../../modules/admin/dashboard';
+import { listFraudAlerts } from '../../modules/admin/fraudAlerts';
+import {
+  getAdminTransaction,
+  listAdminTransactions,
+  markReviewed,
+} from '../../modules/admin/transactions';
 import {
   addBalance,
   createUser,
@@ -124,6 +143,68 @@ export function adminRoutes(deps: AppDeps): Router {
     validate(idParamSchema, 'params'),
     wrap(async (_req, res) => {
       res.json(await listUserAdjustments(deps.db, idOf(res)));
+    }),
+  );
+
+  r.get(
+    '/counters',
+    wrap(async (_req, res) => {
+      res.json(await getCounters(deps.db, deps.now()));
+    }),
+  );
+
+  r.get(
+    '/dashboard',
+    wrap(async (_req, res) => {
+      res.json(await getAdminDashboard(deps.db, deps.now()));
+    }),
+  );
+
+  r.get(
+    '/transactions',
+    validate(adminTransactionsQuerySchema, 'query'),
+    wrap(async (_req, res) => {
+      res.json(await listAdminTransactions(deps.db, res.locals.query as AdminTransactionsQuery));
+    }),
+  );
+
+  r.get(
+    '/transactions/:id',
+    validate(idParamSchema, 'params'),
+    wrap(async (_req, res) => {
+      res.json(await getAdminTransaction(deps.db, idOf(res)));
+    }),
+  );
+
+  r.post(
+    '/transactions/:id/review',
+    validate(idParamSchema, 'params'),
+    wrap(async (req, res) => {
+      await markReviewed(deps.db, idOf(res), principalOf(req), clientIp(req), deps.now());
+      res.json({ message: '✅ Transaction marked as reviewed.' });
+    }),
+  );
+
+  r.get(
+    '/fraud-alerts',
+    validate(fraudAlertsQuerySchema, 'query'),
+    wrap(async (_req, res) => {
+      res.json(await listFraudAlerts(deps.db, res.locals.query as FraudAlertsQuery));
+    }),
+  );
+
+  r.get(
+    '/balance-adjustments',
+    validate(balanceAdjustmentsQuerySchema, 'query'),
+    wrap(async (_req, res) => {
+      res.json(await listBalanceAdjustments(deps.db, res.locals.query as BalanceAdjustmentsQuery));
+    }),
+  );
+
+  r.get(
+    '/admins',
+    wrap(async (_req, res) => {
+      res.json(await listAdmins(deps.db));
     }),
   );
 
