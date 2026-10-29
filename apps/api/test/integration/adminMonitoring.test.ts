@@ -1,5 +1,5 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import type supertest from 'supertest';
 import { adminActions, transactions } from '../../src/db/schema';
 import { hoursAgo, minutesAgo } from '../../src/lib/time';

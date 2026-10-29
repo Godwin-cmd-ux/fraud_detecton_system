@@ -1,0 +1,88 @@
+@import 'tailwindcss';
+
+@theme {
+  /* Sentinel: public and auth pages (dark). */
+  --color-s-bg: #0e1525;
+  --color-s-panel: #16203a;
+  --color-s-panel2: #121a30;
+  --color-s-line: #25324f;
+  --color-s-text: #e8ecf4;
+  --color-s-dim: #8c97b3;
+  --color-s-amber: #f2a93b;
+  --color-s-teal: #3fd8b0;
+  --color-s-red: #e5484d;
+
+  /* Panel: user and admin dashboards (light). */
+  --color-p-bg: #f9fafb;
+  --color-p-primary: #2563eb;
+  --color-p-primary-dark: #1e40af;
+  --color-p-success: #10b981;
+  --color-p-danger: #ef4444;
+  --color-p-warning: #f59e0b;
+  --color-p-dark: #1f2937;
+  --color-p-darker: #111827;
+  --color-p-text: #374151;
+  --color-p-muted: #6b7280;
+  --color-p-border: #e5e7eb;
+
+  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-system:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  --radius-card: 12px;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    margin: 0;
+    font-family: var(--font-system);
+    color: var(--color-p-text);
+    background: var(--color-p-bg);
+  }
+  .theme-sentinel {
+    font-family: var(--font-body);
+    color: var(--color-s-text);
+    background: var(--color-s-bg);
+    min-height: 100vh;
+  }
+  .theme-sentinel h1,
+  .theme-sentinel h2,
+  .theme-sentinel h3 {
+    font-family: var(--font-display);
+  }
+  @keyframes pulse-dot {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.35;
+    }
+  }
+  @keyframes slide-down {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .animate-slide-down {
+    animation: slide-down 0.35s ease;
+  }
+  .pulse-dot {
+    animation: pulse-dot 1.6s ease-in-out infinite;
+  }
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+  }
+}

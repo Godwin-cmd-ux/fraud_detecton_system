@@ -1,0 +1,70 @@
+import { useEffect, useState } from 'react';
+import type { InputHTMLAttributes, ReactNode } from 'react';
+import { Link } from 'react-router';
+import { ApiError, api } from '../../../api/client';
+
+export const authInputClass = 'w-full rounded-lg border border-s-line bg-s-bg px-3 py-3 text-s-text focus:outline-none focus:ring-2 focus:ring-s-teal';
+export const authButtonClass = 'rounded-lg bg-s-teal px-5 py-3 font-semibold text-s-bg disabled:cursor-not-allowed disabled:opacity-50';
+
+export function AuthForm({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
+  return <main className="min-h-screen bg-s-bg px-4 py-10 text-s-text">
+    <div className="mx-auto max-w-lg rounded-2xl border border-s-line bg-s-panel p-6 sm:p-9">
+      <Link to="/" className="font-display text-lg font-bold text-s-teal">Sentinel</Link>
+      <h1 className="mt-6 font-display text-3xl font-bold">{title}</h1>
+      {subtitle && <p className="mt-2 text-s-dim">{subtitle}</p>}
+      <div className="mt-6">{children}</div>
+    </div>
+  </main>;
+}
+
+export function AuthField({ label, ...props }: InputHTMLAttributes<HTMLInputElement> & { label: string }) {
+  const id = props.id ?? props.name;
+  return <div className="space-y-2"><label htmlFor={id} className="block text-sm font-medium">{label}</label>
+    <input {...props} id={id} className={authInputClass} /></div>;
+}
+
+export function AuthError({ message }: { message: string }) {
+  return message ? <p role="alert" className="mb-4 whitespace-pre-line rounded-lg border border-s-red p-3 text-s-red">{message}</p> : null;
+}
+
+export function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'Something went wrong. Please try again.';
+}
+
+export function validationMessage(result: { error: { issues: { message: string }[] } }): string {
+  return [...new Set(result.error.issues.map((issue) => issue.message))].join('\n');
+}
+
+/** Uses an absolute deadline so a sleeping/background tab does not extend lockout. */
+export function useDeadline(deadline: number): number {
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    setNow(Date.now());
+    if (!deadline) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [deadline]);
+  return Math.max(0, Math.ceil((deadline - now) / 1000));
+}
+
+export function lockDeadline(error: unknown): number {
+  if (!(error instanceof ApiError) || error.status !== 423) return 0;
+  const until = Date.parse(error.fields?.lockedUntil ?? '');
+  const minutes = Number(error.fields?.minutesRemaining);
+  return Number.isFinite(until) ? until : Date.now() + (Number.isFinite(minutes) && minutes > 0 ? minutes : 5) * 60_000;
+}
+
+export interface SecurityQuestion { key: string; text: string }
+export function useQuestions() {
+  const [questions, setQuestions] = useState<SecurityQuestion[]>([]);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    let active = true;
+    api<SecurityQuestion[]>('/security-questions').then((rows) => { if (active) setQuestions(rows); })
+      .catch((e: unknown) => { if (active) setError(errorMessage(e)); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
+  return { questions, error, loading };
+}
