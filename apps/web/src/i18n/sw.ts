@@ -53,6 +53,32 @@ export const sw: Record<string, string> = {
   Flagged: 'Umewekewa alama',
   Scanning: 'Unachunguzwa',
   'Rule checks': 'Ukaguzi wa kanuni',
+  FAQ: 'Maswali',
+  'Inside Sentinel': 'Ndani ya Sentinel',
+  'One wallet, two views': 'Pochi moja, mitazamo miwili',
+  'Customers see their money and history. Administrators see the transfers that need a closer look.':
+    'Wateja huona pesa na historia yao. Wasimamizi huona miamala inayohitaji ukaguzi wa karibu.',
+  'Product preview': 'Muonekano wa mfumo',
+  'Customer wallet': 'Pochi ya mteja',
+  'Admin fraud alerts': 'Tahadhari za udanganyifu (msimamizi)',
+  'Sample data': 'Data ya mfano',
+  'Questions people ask': 'Maswali yanayoulizwa mara kwa mara',
+  'Short answers about accounts, blocked transfers and keeping your wallet safe.':
+    'Majibu mafupi kuhusu akaunti, miamala iliyozuiwa na usalama wa pochi yako.',
+  'How long does account approval take?': 'Idhini ya akaunti huchukua muda gani?',
+  'An administrator reviews every new account by hand. Until it is approved, signing in shows that the account is pending; once approved you can sign in straight away.':
+    'Msimamizi hukagua kila akaunti mpya mwenyewe. Kabla haijaidhinishwa, ukijaribu kuingia utaona kwamba akaunti inasubiri idhini; ikishaidhinishwa unaweza kuingia mara moja.',
+  'Why was my transfer blocked?': 'Kwa nini muamala wangu umezuiwa?',
+  'A transfer is blocked when it matches one of the fraud rules, such as paying many people in a few minutes or sending a large amount at night. The message shows the reason. For activity limits, wait a few minutes and try again.':
+    'Muamala huzuiwa unapolingana na mojawapo ya kanuni za udanganyifu, kama kulipa watu wengi ndani ya dakika chache au kutuma kiasi kikubwa usiku. Ujumbe unaonyesha sababu. Kwa vikomo vya shughuli, subiri dakika chache kisha ujaribu tena.',
+  'What does "flagged for review" mean?': '"Imewekwa kwa ukaguzi" inamaanisha nini?',
+  'Why are my withdrawals blocked?': 'Kwa nini utoaji pesa wangu umezuiwa?',
+  'I forgot my password. What do I do?': 'Nimesahau nenosiri langu. Nifanye nini?',
+  'I typed the wrong password and now I am locked out.':
+    'Niliandika nenosiri lisilo sahihi na sasa nimefungiwa.',
+  'Which languages and currency are supported?': 'Ni lugha na sarafu gani zinazotumika?',
+  'The whole system works in English and Kiswahili, and all amounts are in Tanzanian shillings (TSh).':
+    'Mfumo wote unafanya kazi kwa Kiingereza na Kiswahili, na kiasi chote ni kwa shilingi za Tanzania (TSh).',
   'Try it': 'Jaribu',
   Security: 'Usalama',
   'Run a transfer through the checks': 'Pitisha muamala kwenye ukaguzi',

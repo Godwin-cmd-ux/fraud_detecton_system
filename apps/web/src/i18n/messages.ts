@@ -72,6 +72,14 @@ export const messages: Record<string, string> = {
   'Received from {0}': 'Imepokelewa kutoka kwa {0}',
   'Sent to {0}': 'Imetumwa kwa {0}',
   'More actions for {0}': 'Vitendo zaidi kwa {0}',
+  'Your transfer went through, but its risk score was between {0} and {1}, so an administrator will look at it. No action is needed from you.':
+    'Muamala wako umefanikiwa, lakini alama yake ya hatari ilikuwa kati ya {0} na {1}, kwa hiyo msimamizi ataukagua. Huhitaji kufanya chochote.',
+  'After {0} failed withdrawal attempts, withdrawals are paused to protect your account. The block clears {1} hours after the last failed attempt.':
+    'Baada ya majaribio {0} ya kutoa pesa yaliyoshindikana, utoaji pesa husimamishwa kulinda akaunti yako. Kizuizi huondoka saa {1} baada ya jaribio la mwisho lililoshindikana.',
+  'Choose "Forgot password?" on the sign-in page and answer at least 3 of your security questions. You get a reset link that works for {0} minutes.':
+    'Chagua "Umesahau nenosiri?" kwenye ukurasa wa kuingia kisha ujibu angalau maswali 3 ya usalama. Utapata kiungo cha kubadilisha nenosiri kinachofanya kazi kwa dakika {0}.',
+  'After {0} wrong passwords, sign-in is locked for {1} minutes. The sign-in page shows a countdown; try again when it ends.':
+    'Baada ya manenosiri {0} yasiyo sahihi, uingiaji hufungwa kwa dakika {1}. Ukurasa wa kuingia unaonyesha muda uliobaki; jaribu tena muda ukiisha.',
   '{0} transfers over {1} totalling more than {2} within {3} minutes are blocked.':
     'Miamala {0} inayozidi {1} yenye jumla zaidi ya {2} ndani ya dakika {3} huzuiwa.',
   'Sending to {0} different people within {1} minutes is blocked.':

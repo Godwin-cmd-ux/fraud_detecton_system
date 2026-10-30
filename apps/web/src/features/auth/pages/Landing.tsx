@@ -2,7 +2,9 @@ import { useLanguage, translate as tr } from '../../../i18n';
 import { Link } from 'react-router';
 import { formatTsh } from '../../../lib/format';
 import { useReveal } from '../../../lib/useReveal';
+import { FaqSection } from '../components/landing/FaqSection';
 import { PrivacySection } from '../components/landing/PrivacySection';
+import { ProductPreview } from '../components/landing/ProductPreview';
 import { RiskSimulator } from '../components/landing/RiskSimulator';
 import { RulesSection } from '../components/landing/RulesSection';
 import { LanguageSwitcher } from '../../../i18n/LanguageSwitcher';
@@ -171,8 +173,11 @@ export function Landing() {
         </Link>
         <div className="site-nav__links flex items-center justify-self-end text-sm">
           <a href="#try-it">{tr('Try it')}</a>
-          <a href="#how-it-works">{tr('How it works')}</a>
+          <a href="#how-it-works" className="site-nav__extra">
+            {tr('How it works')}
+          </a>
           <a href="#security">{tr('Security')}</a>
+          <a href="#faq">{tr('FAQ')}</a>
           <Link to="/register" className="site-nav__extra">
             {tr('Create account')}
           </Link>
@@ -233,6 +238,19 @@ export function Landing() {
         </div>
       </section>
 
+      <section id="preview" className="steps-section">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <SectionHead
+            eyebrow="Inside Sentinel"
+            title="One wallet, two views"
+            body="Customers see their money and history. Administrators see the transfers that need a closer look."
+          />
+          <div className="reveal">
+            <ProductPreview />
+          </div>
+        </div>
+      </section>
+
       <section id="try-it" className="steps-section">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <SectionHead
@@ -283,6 +301,17 @@ export function Landing() {
             body="Protection that works on your side too, not only against fraudsters."
           />
           <PrivacySection />
+        </div>
+      </section>
+
+      <section id="faq" className="steps-section">
+        <div className="mx-auto grid max-w-6xl gap-10 px-6 py-20 lg:grid-cols-[0.8fr_1.2fr]">
+          <SectionHead
+            eyebrow="FAQ"
+            title="Questions people ask"
+            body="Short answers about accounts, blocked transfers and keeping your wallet safe."
+          />
+          <FaqSection />
         </div>
       </section>
 
