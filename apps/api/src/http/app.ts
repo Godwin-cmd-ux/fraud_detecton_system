@@ -13,6 +13,7 @@ import { adminRoutes } from './routes/admin';
 import { authRoutes } from './routes/auth';
 import { meRoutes } from './routes/me';
 import { publicRoutes } from './routes/public';
+import { ussdRoutes } from './routes/ussd';
 
 export interface AppDeps {
   db: Db;
@@ -38,6 +39,11 @@ export function createApp(deps: AppDeps): express.Express {
   app.use(cors({ origin: deps.corsOrigin, credentials: true }));
   app.use(express.json({ limit: '100kb' }));
   app.use(sessionMiddleware(deps.pool, deps.sessionSecret, deps.secureCookies ?? false));
+
+  // The USSD callback is a machine-to-machine endpoint: no browser session, no CSRF header.
+  // It is authenticated by its own callback secret and mounted ahead of the CSRF guard.
+  app.use('/api/ussd', ussdRoutes(deps));
+
   app.use(csrfGuard);
 
   app.use('/api', publicRoutes(deps));

@@ -46,6 +46,8 @@ export async function seed(db: Db): Promise<SeedResult> {
       email: 'admin@example.com',
       passwordHash: await bcrypt.hash(adminPassword, 10),
       fullName: 'System Administrator',
+      // Lets the seeded administrator open the USSD dashboard after dialling the service code.
+      phone: '+255700000000',
     })
     .onConflictDoNothing();
 

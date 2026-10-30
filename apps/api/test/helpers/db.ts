@@ -22,6 +22,9 @@ export function testPool(): pg.Pool {
 }
 
 const APP_TABLES = [
+  'ussd_requests',
+  'ussd_security_events',
+  'ussd_sessions',
   'admin_actions',
   'transactions',
   'failed_withdrawal_attempts',

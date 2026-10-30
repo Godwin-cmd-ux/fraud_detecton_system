@@ -12,6 +12,7 @@ import {
   serial,
   text,
   timestamp,
+  uniqueIndex,
   varchar,
 } from 'drizzle-orm/pg-core';
 import {
@@ -49,6 +50,10 @@ export const users = pgTable(
     resetTokenExpiry: timestamp('reset_token_expiry', { withTimezone: true }),
     lastKnownLocation: varchar('last_known_location', { length: 100 }),
     locationUpdatedAt: timestamp('location_updated_at', { withTimezone: true }),
+    /** USSD transaction PIN (bcrypt). Null until the customer enrols one through USSD. */
+    transactionPinHash: varchar('transaction_pin_hash', { length: 255 }),
+    pinAttempts: integer('pin_attempts').notNull().default(0),
+    pinLockedUntil: timestamp('pin_locked_until', { withTimezone: true }),
     ...timestamps,
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -66,6 +71,11 @@ export const admins = pgTable('admins', {
   fullName: varchar('full_name', { length: 100 }).notNull(),
   isActive: boolean('is_active').notNull().default(true),
   lastLogin: timestamp('last_login', { withTimezone: true }),
+  /** Number the USSD gateway recognises as this administrator (unique when set). */
+  phone: varchar('phone', { length: 20 }),
+  pinHash: varchar('pin_hash', { length: 255 }),
+  pinAttempts: integer('pin_attempts').notNull().default(0),
+  pinLockedUntil: timestamp('pin_locked_until', { withTimezone: true }),
   ...timestamps,
 });
 
@@ -167,6 +177,74 @@ export const securityQuestions = pgTable('security_questions', {
   questionText: varchar('question_text', { length: 255 }).notNull(),
   isActive: boolean('is_active').notNull().default(true),
 });
+
+/**
+ * USSD session state. `state` is the navigation/multi-step state machine (scene + collected
+ * inputs), persisted so the callback stays stateless between HTTP requests and survives restarts.
+ */
+export const ussdSessions = pgTable(
+  'ussd_sessions',
+  {
+    id: varchar('id', { length: 128 }).primaryKey(),
+    phone: varchar('phone', { length: 20 }).notNull(),
+    actorKind: varchar('actor_kind', { length: 10 }),
+    actorId: integer('actor_id'),
+    state: jsonb('state').$type<Record<string, unknown>>().notNull(),
+    /** The cumulative gateway `text` already consumed; the continuity anchor for the next screen. */
+    lastText: text('last_text').notNull(),
+    ...timestamps,
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  },
+  (t) => [
+    index('ussd_sessions_phone_idx').on(t.phone),
+    index('ussd_sessions_expires_idx').on(t.expiresAt),
+  ],
+);
+
+/**
+ * One row per gateway callback, also the idempotency ledger: a repeated delivery of the same
+ * (session, text) returns the stored response instead of re-running the workflow a second time.
+ */
+export const ussdRequests = pgTable(
+  'ussd_requests',
+  {
+    id: serial('id').primaryKey(),
+    sessionId: varchar('session_id', { length: 128 }).notNull(),
+    phone: varchar('phone', { length: 20 }).notNull(),
+    textHash: varchar('text_hash', { length: 64 }).notNull(),
+    /** Cumulative input with PIN segments masked, so secrets never reach the database. */
+    text: text('text').notNull(),
+    response: text('response').notNull(),
+    isEnd: boolean('is_end').notNull().default(false),
+    scene: varchar('scene', { length: 40 }),
+    actorKind: varchar('actor_kind', { length: 10 }),
+    actorId: integer('actor_id'),
+    ipAddress: varchar('ip_address', { length: 45 }),
+    durationMs: integer('duration_ms'),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex('ussd_requests_session_text_uq').on(t.sessionId, t.textHash),
+    index('ussd_requests_created_idx').on(t.createdAt),
+    index('ussd_requests_phone_idx').on(t.phone, t.createdAt),
+  ],
+);
+
+/** Rejected callbacks, PIN lockouts and privilege violations, kept for administrator review. */
+export const ussdSecurityEvents = pgTable(
+  'ussd_security_events',
+  {
+    id: serial('id').primaryKey(),
+    eventType: varchar('event_type', { length: 40 }).notNull(),
+    phone: varchar('phone', { length: 20 }),
+    sessionId: varchar('session_id', { length: 128 }),
+    detail: text('detail'),
+    ipAddress: varchar('ip_address', { length: 45 }),
+    ...timestamps,
+  },
+  (t) => [index('ussd_security_events_type_idx').on(t.eventType, t.createdAt)],
+);
 
 /** Session store table for connect-pg-simple. */
 export const sessions = pgTable(

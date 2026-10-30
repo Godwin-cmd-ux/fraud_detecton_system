@@ -78,8 +78,23 @@ export async function createUser(
 
 export async function createAdmin(
   db: Db,
-  o: Partial<{ username: string; email: string; password: string; fullName: string; isActive: boolean }> = {},
-): Promise<{ id: number; username: string; email: string; password: string; fullName: string }> {
+  o: Partial<{
+    username: string;
+    email: string;
+    password: string;
+    fullName: string;
+    isActive: boolean;
+    /** Number the USSD gateway recognises as this administrator. */
+    phone: string | null;
+  }> = {},
+): Promise<{
+  id: number;
+  username: string;
+  email: string;
+  password: string;
+  fullName: string;
+  phone: string | null;
+}> {
   const n = next();
   const password = o.password ?? 'Admin@123';
   const username = o.username ?? `admin${n}`;
@@ -87,9 +102,16 @@ export async function createAdmin(
   const fullName = o.fullName ?? `Admin ${n}`;
   const [row] = await db
     .insert(admins)
-    .values({ username, email, fullName, passwordHash: await hash(password), isActive: o.isActive ?? true })
+    .values({
+      username,
+      email,
+      fullName,
+      passwordHash: await hash(password),
+      isActive: o.isActive ?? true,
+      phone: o.phone ?? null,
+    })
     .returning();
-  return { id: row!.id, username, email, password, fullName };
+  return { id: row!.id, username, email, password, fullName, phone: row!.phone };
 }
 
 let txSeq = 0;

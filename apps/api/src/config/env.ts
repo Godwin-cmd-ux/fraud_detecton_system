@@ -16,6 +16,12 @@ const envSchema = z.object({
   ADMIN_SETUP_KEY: z.string().min(1).default('AdminSetupTZ'),
   PORT: z.coerce.number().int().positive().default(4000),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
+  /** Shared secret the Africa's Talking callback URL must carry (?token=...). */
+  USSD_CALLBACK_SECRET: z.string().min(8).default('ussd-dev-secret'),
+  /** Optional comma-separated source IP allowlist; empty allows any source (ngrok masks the IP). */
+  USSD_ALLOWED_IPS: z.string().default(''),
+  USSD_SESSION_TTL_SEC: z.coerce.number().int().positive().default(180),
+  USSD_RATE_LIMIT_PER_MIN: z.coerce.number().int().positive().default(30),
 });
 
 export const env = envSchema.parse(process.env);
