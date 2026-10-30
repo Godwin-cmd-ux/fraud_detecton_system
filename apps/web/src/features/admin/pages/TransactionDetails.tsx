@@ -1,3 +1,4 @@
+import { useLanguage, translate as tr } from '../../../i18n';
 import { Link, useParams } from 'react-router';
 import { useAdminTransaction } from '../../../api/admin';
 import { Alert } from '../../../components/ui/Alert';
@@ -8,41 +9,44 @@ import { formatDate, formatTsh, riskColor } from '../../../lib/format';
 import { MonitoringHeader } from '../components/Monitoring';
 
 export function TransactionDetailsPage() {
+  useLanguage();
   const { id } = useParams();
   const validId = Number(id) > 0 && Number.isInteger(Number(id));
   const query = useAdminTransaction(validId ? Number(id) : undefined);
   const tx = query.data;
   return (
     <div className="space-y-5">
-      <MonitoringHeader title="Transaction Details" />
+      <MonitoringHeader title={tr('Transaction Details')} />
       <Link to="/admin/transactions" className="text-p-primary">
-        ← Back to Transactions
+        {tr('← Back to Transactions')}
       </Link>
-      {!validId && <Alert kind="error">Invalid transaction ID.</Alert>}
+      {!validId && <Alert kind="error">{tr('Invalid transaction ID.')}</Alert>}
       {validId && query.isPending && <Spinner />}
-      {query.isError && <Alert kind="error">Could not load transaction details.</Alert>}
+      {query.isError && <Alert kind="error">{tr('Could not load transaction details.')}</Alert>}
       {tx && (
         <>
-          <Card title="Transaction Information">
+          <Card title={tr('Transaction Information')}>
             <dl className="grid gap-3 sm:grid-cols-2">
               {Object.entries({
                 'Transaction ID': tx.transactionId,
                 Amount: formatTsh(tx.amount),
-                Type: tx.type,
+                Type: tr(tx.type),
                 Date: formatDate(tx.createdAt, 'second'),
-                Location: tx.location ?? 'N/A',
-                Message: tx.message ?? 'N/A',
-                'IP address': tx.ipAddress ?? 'N/A',
-                'User agent': tx.userAgent ?? 'N/A',
-                Administrator: tx.admin ? `${tx.admin.fullName} @${tx.admin.username}` : 'System',
+                Location: tx.location ?? tr('N/A'),
+                Message: tx.message ?? tr('N/A'),
+                'IP address': tx.ipAddress ?? tr('N/A'),
+                'User agent': tx.userAgent ?? tr('N/A'),
+                Administrator: tx.admin
+                  ? `${tx.admin.fullName} @${tx.admin.username}`
+                  : tr('System'),
               }).map(([label, value]) => (
                 <div key={label}>
-                  <dt className="text-sm text-p-muted">{label}</dt>
+                  <dt className="text-sm text-p-muted">{tr(label)}</dt>
                   <dd className="break-words font-semibold">{value}</dd>
                 </div>
               ))}
               <div>
-                <dt>Status</dt>
+                <dt>{tr('Status')}</dt>
                 <dd>
                   <StatusBadge status={tx.status} />
                 </dd>
@@ -51,21 +55,27 @@ export function TransactionDetailsPage() {
           </Card>
           <div className="grid gap-5 md:grid-cols-2">
             {(['sender', 'receiver'] as const).map((role) => (
-              <Card key={role} title={`${role === 'sender' ? 'Sender' : 'Receiver'} Information`}>
+              <Card
+                key={role}
+                title={tr(`${role === 'sender' ? 'Sender' : 'Receiver'} Information`)}
+              >
                 {tx[role] ? (
                   <div className="space-y-2">
                     <p className="font-bold">{tx[role].fullName}</p>
                     <p>{tx[role].email}</p>
                     <p>{tx[role].phone}</p>
-                    <p>Balance: {formatTsh(tx[role].balance)}</p>
+                    <p>
+                      {tr('Balance: ')}
+                      {formatTsh(tx[role].balance)}
+                    </p>
                   </div>
                 ) : (
-                  <p>System</p>
+                  <p>{tr('System')}</p>
                 )}
               </Card>
             ))}
           </div>
-          <Card title="Fraud Detection Analysis">
+          <Card title={tr('Fraud Detection Analysis')}>
             {tx.fraudScore > 0 ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
@@ -76,7 +86,7 @@ export function TransactionDetailsPage() {
                 </div>
                 <div
                   role="meter"
-                  aria-label="Fraud risk score"
+                  aria-label={tr('Fraud risk score')}
                   aria-valuemin={0}
                   aria-valuemax={100}
                   aria-valuenow={tx.fraudScore}
@@ -96,31 +106,39 @@ export function TransactionDetailsPage() {
                   <span>70</span>
                   <span>100</span>
                 </div>
-                <p>Model version: {tx.modelVersion ?? 'N/A'}</p>
-                <p>Prediction time: {tx.predictionTime ?? 'N/A'}</p>
-                <h3 className="font-bold">Key Features</h3>
+                <p>
+                  {tr('Model version: ')}
+                  {tx.modelVersion ?? 'N/A'}
+                </p>
+                <p>
+                  {tr('Prediction time: ')}
+                  {tx.predictionTime ?? 'N/A'}
+                </p>
+                <h3 className="font-bold">{tr('Key Features')}</h3>
                 <dl className="grid gap-2 sm:grid-cols-2">
                   {Object.entries(tx.featureData ?? { Features: null }).map(([key, value]) => (
                     <div key={key}>
-                      <dt className="text-p-muted">{key.replaceAll('_', ' ')}</dt>
+                      <dt className="text-p-muted">{tr(key.replaceAll('_', ' '))}</dt>
                       <dd>
-                        {value == null
-                          ? 'N/A'
-                          : typeof value === 'object'
-                            ? JSON.stringify(value)
-                            : String(value)}
+                        {tr(
+                          value == null
+                            ? 'N/A'
+                            : typeof value === 'object'
+                              ? JSON.stringify(value)
+                              : String(value),
+                        )}
                       </dd>
                     </div>
                   ))}
                 </dl>
                 {tx.fraudScore > 70 && (
                   <Link to="/admin/fraud-alerts" className="font-semibold text-p-danger">
-                    View All Fraud Alerts
+                    {tr('View All Fraud Alerts')}
                   </Link>
                 )}
               </div>
             ) : (
-              <EmptyState title="No Fraud Analysis Available" />
+              <EmptyState title={tr('No Fraud Analysis Available')} />
             )}
           </Card>
         </>

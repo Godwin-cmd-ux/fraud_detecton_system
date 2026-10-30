@@ -63,6 +63,12 @@ Choose the Admin role on the login page for the administrator account.
 
 Demo users are active and approved. Their first three security-question answers are all `test`. Newly registered users require administrator approval before login. These credentials and balances are for local demonstration.
 
+## Languages
+
+The interface supports **English and Kiswahili**. Use the **Language / Lugha** selector on the landing page, auth forms, or above the signed-in dashboard. English is the default; your choice is remembered in this browser and synchronizes between tabs. Switching preserves current form entries. Dates follow the selected language while keeping the Africa/Dar_es_Salaam timezone. Names, locations, transaction references, and customer-entered notes retain their original values.
+
+Translations live in `apps/web/src/i18n/sw.ts` and `messages.ts`. English source text is the message key; numbered placeholders preserve names and amounts in system messages. API parameters and stored data remain language-independent. New interface text should use `translate` and subscribe through `useLanguage`; unknown messages fall back to English.
+
 ## Verification
 
 ```sh

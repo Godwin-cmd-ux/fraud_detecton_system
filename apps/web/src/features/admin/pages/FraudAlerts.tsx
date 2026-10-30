@@ -1,3 +1,4 @@
+import { useLanguage, translate as tr } from '../../../i18n';
 import { useState } from 'react';
 import { fraudAlertsQuerySchema } from '@fraud/shared';
 import { useFraudAlerts, useMarkReviewed } from '../../../api/admin';
@@ -16,6 +17,7 @@ import {
 import { TransactionsTable } from '../components/TransactionsTable';
 
 export function FraudAlertsPage() {
+  useLanguage();
   const { params, update } = useMonitoringFilters();
   const parsed = fraudAlertsQuerySchema.safeParse(Object.fromEntries(params));
   const query = useFraudAlerts(parsed.success ? parsed.data : { page: 1 });
@@ -23,7 +25,7 @@ export function FraudAlertsPage() {
   const [selected, setSelected] = useState<AdminTxRow | null>(null);
   return (
     <div>
-      <MonitoringHeader title={`Fraud Alerts (${query.data?.total ?? 0})`} />
+      <MonitoringHeader title={tr(`Fraud Alerts (${query.data?.total ?? 0})`)} />
       <Card>
         <MonitoringFilters
           fields={[
@@ -35,12 +37,12 @@ export function FraudAlertsPage() {
           ]}
         />
         {!parsed.success && (
-          <Alert kind="error">Invalid filters. Clear Filters to try again.</Alert>
+          <Alert kind="error">{tr('Invalid filters. Clear Filters to try again.')}</Alert>
         )}
         {query.isPending && <Spinner />}
-        {query.isError && <Alert kind="error">Could not load fraud alerts.</Alert>}
-        {review.isError && <Alert kind="error">{review.error.message}</Alert>}
-        {review.isSuccess && <Alert kind="success">{review.data.message}</Alert>}
+        {query.isError && <Alert kind="error">{tr('Could not load fraud alerts.')}</Alert>}
+        {review.isError && <Alert kind="error">{tr(review.error.message)}</Alert>}
+        {review.isSuccess && <Alert kind="success">{tr(review.data.message)}</Alert>}
         {query.data && (
           <>
             {query.data.items.length ? (
@@ -56,13 +58,15 @@ export function FraudAlertsPage() {
                         setSelected(row);
                       }}
                     >
-                      Mark Reviewed
+                      {tr('Mark Reviewed')}
                     </Button>
                   )
                 }
               />
             ) : (
-              <EmptyState title="No Fraud Alerts">All transactions appear legitimate</EmptyState>
+              <EmptyState title={tr('No Fraud Alerts')}>
+                {tr('All transactions appear legitimate')}
+              </EmptyState>
             )}
             <Pagination
               page={query.data.page}
@@ -73,8 +77,8 @@ export function FraudAlertsPage() {
         )}
         <ConfirmDialog
           open={selected !== null}
-          title="Mark transaction reviewed?"
-          body={selected?.transactionId}
+          title={tr('Mark transaction reviewed?')}
+          body={tr(selected?.transactionId)}
           loading={review.isPending}
           onCancel={() => setSelected(null)}
           onConfirm={() => {

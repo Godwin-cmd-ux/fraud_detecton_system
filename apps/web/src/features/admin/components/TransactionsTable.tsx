@@ -1,3 +1,4 @@
+import { useLanguage, translate as tr } from '../../../i18n';
 import { Link } from 'react-router';
 import type { ReactNode } from 'react';
 import type { AdminTxRow } from '../../../api/types';
@@ -22,47 +23,77 @@ export interface TransactionsTableProps {
 }
 
 /** Shared transaction table for the admin dashboard, monitoring and alert pages. */
-export function TransactionsTable({ items, alert = false, actions, compact = false }: TransactionsTableProps) {
-  const nullParty = alert ? 'Unknown' : 'System';
+export function TransactionsTable({
+  items,
+  alert = false,
+  actions,
+  compact = false,
+}: TransactionsTableProps) {
+  useLanguage();
+  const nullParty = alert ? tr('Unknown') : tr('System');
   return (
     <Table>
       <thead>
         <tr>
-          {alert && <Th>Date &amp; Time</Th>}
-          <Th>Transaction ID</Th>
-          <Th>Sender</Th>
-          <Th>Receiver</Th>
-          <Th>Amount</Th>
-          {!alert && !compact && <Th>Type</Th>}
-          <Th>Status</Th>
-          {!compact && <Th>Risk Score</Th>}
-          <Th>Risk Level</Th>
-          {!alert && <Th>Date</Th>}
-          <Th>Actions</Th>
+          {alert && <Th>{tr('Date & Time')}</Th>}
+          <Th>{tr('Transaction ID')}</Th>
+          <Th>{tr('Sender')}</Th>
+          <Th>{tr('Receiver')}</Th>
+          <Th>{tr('Amount')}</Th>
+          {!alert && !compact && <Th>{tr('Type')}</Th>}
+          <Th>{tr('Status')}</Th>
+          {!compact && <Th>{tr('Risk Score')}</Th>}
+          <Th>{tr('Risk Level')}</Th>
+          {!alert && <Th>{tr('Date')}</Th>}
+          <Th>{tr('Actions')}</Th>
         </tr>
       </thead>
       <tbody>
         {items.map((r) => (
-          <tr key={r.id} className={alert ? `alert-row-${(r.riskLevel ?? 'pending').toLowerCase()}` : undefined}>
-            {alert && <Td className="whitespace-nowrap text-p-muted">{formatDate(r.createdAt, 'second')}</Td>}
+          <tr
+            key={r.id}
+            className={alert ? `alert-row-${(r.riskLevel ?? 'pending').toLowerCase()}` : undefined}
+          >
+            {alert && (
+              <Td className="whitespace-nowrap text-p-muted">
+                {formatDate(r.createdAt, 'second')}
+              </Td>
+            )}
             <Td className="font-mono text-xs">{r.transactionId}</Td>
             <Td>{r.senderName ?? nullParty}</Td>
             <Td>{r.receiverName ?? nullParty}</Td>
             <Td className="font-semibold whitespace-nowrap">{formatTsh(r.amount)}</Td>
-            {!alert && !compact && <Td>{capitalize(r.type)}</Td>}
+            {!alert && !compact && <Td>{tr(capitalize(r.type))}</Td>}
             <Td>
               <StatusBadge status={r.status} />
-              {r.reviewedAt && <span className="ml-1 text-xs text-p-muted">· Reviewed</span>}
+              {r.reviewedAt && (
+                <span className="ml-1 text-xs text-p-muted">{tr('· Reviewed')}</span>
+              )}
             </Td>
-            {!compact && <Td>{r.fraudScore > 0 ? <RiskBar score={r.fraudScore} twoTone={alert} /> : <span className="text-p-muted">N/A</span>}</Td>}
+            {!compact && (
+              <Td>
+                {r.fraudScore > 0 ? (
+                  <RiskBar score={r.fraudScore} twoTone={alert} />
+                ) : (
+                  <span className="text-p-muted">{tr('N/A')}</span>
+                )}
+              </Td>
+            )}
             <Td>
               <RiskBadge level={r.riskLevel} />
             </Td>
-            {!alert && <Td className="whitespace-nowrap text-p-muted">{formatDate(r.createdAt, 'minute')}</Td>}
+            {!alert && (
+              <Td className="whitespace-nowrap text-p-muted">
+                {formatDate(r.createdAt, 'minute')}
+              </Td>
+            )}
             <Td>
               <div className="flex flex-wrap gap-1.5">
-                <Link to={`/admin/transactions/${r.id}`} className="rounded-md bg-p-primary px-2.5 py-1 text-xs font-semibold text-white">
-                  View
+                <Link
+                  to={`/admin/transactions/${r.id}`}
+                  className="rounded-md bg-p-primary px-2.5 py-1 text-xs font-semibold text-white"
+                >
+                  {tr('View')}
                 </Link>
                 {actions?.(r)}
               </div>

@@ -1,3 +1,4 @@
+import { useLanguage, translate as tr } from '../../../i18n';
 import { ADJUSTMENT_TYPES, balanceAdjustmentsQuerySchema } from '@fraud/shared';
 import { useAdmins, useBalanceAdjustments } from '../../../api/admin';
 import type { AdjustmentLogRow } from '../../../api/types';
@@ -23,14 +24,14 @@ export function adjustmentsCsv(rows: AdjustmentLogRow[]): string {
     return `"${safe.replaceAll('"', '""')}"`;
   };
   return [
-    ['Transaction', 'Date', 'Customer', 'Email', 'Admin', 'Type', 'Amount', 'Reason'],
+    ['Transaction', 'Date', 'Customer', 'Email', 'Admin', 'Type', 'Amount', 'Reason'].map(tr),
     ...rows.map((row) => [
       row.transactionId,
       row.createdAt,
-      row.userName ?? 'System',
+      row.userName ?? tr('System'),
       row.userEmail,
-      row.adminName ? `${row.adminName} @${row.adminUsername ?? ''}` : 'System',
-      row.type,
+      row.adminName ? `${row.adminName} @${row.adminUsername ?? ''}` : tr('System'),
+      tr(row.type),
       row.amount,
       row.reason,
     ]),
@@ -40,6 +41,7 @@ export function adjustmentsCsv(rows: AdjustmentLogRow[]): string {
 }
 
 export function BalanceAdjustmentsPage() {
+  useLanguage();
   const { params, update } = useMonitoringFilters();
   const parsed = balanceAdjustmentsQuerySchema.safeParse(Object.fromEntries(params));
   const query = useBalanceAdjustments(parsed.success ? parsed.data : { page: 1 });
@@ -58,15 +60,15 @@ export function BalanceAdjustmentsPage() {
   const summary = query.data?.summary;
   return (
     <div className="space-y-5">
-      <MonitoringHeader title="Balance Adjustments" />
+      <MonitoringHeader title={tr('Balance Adjustments')} />
       {summary && (
         <>
           <StatGrid>
-            <StatCard label="Adjustments" value={summary.total} />
-            <StatCard label="Total amount" value={formatTsh(summary.totalAmount)} />
-            <StatCard label="Average amount" value={formatTsh(summary.avgAmount)} />
-            <StatCard label="Customers" value={summary.uniqueUsers} />
-            <StatCard label="Administrators" value={summary.uniqueAdmins} />
+            <StatCard label={tr('Adjustments')} value={summary.total} />
+            <StatCard label={tr('Total amount')} value={formatTsh(summary.totalAmount)} />
+            <StatCard label={tr('Average amount')} value={formatTsh(summary.avgAmount)} />
+            <StatCard label={tr('Customers')} value={summary.uniqueUsers} />
+            <StatCard label={tr('Administrators')} value={summary.uniqueAdmins} />
           </StatGrid>
           <div className="flex flex-wrap gap-2">
             {summary.byType.map((row) => (
@@ -78,14 +80,14 @@ export function BalanceAdjustmentsPage() {
         </>
       )}
       <Card
-        title="Adjustment Log"
+        title={tr('Adjustment Log')}
         actions={
           <>
             <Button variant="secondary" disabled={!query.data} onClick={exportPage}>
-              Export CSV (visible page)
+              {tr('Export CSV (visible page)')}
             </Button>
             <Button variant="secondary" onClick={() => window.print()}>
-              Print
+              {tr('Print')}
             </Button>
           </>
         }
@@ -99,13 +101,13 @@ export function BalanceAdjustmentsPage() {
           ]}
         />
         <label className="mb-4 block text-sm font-semibold">
-          Administrator
+          {tr('Administrator')}
           <Select
-            aria-label="Administrator"
+            aria-label={tr('Administrator')}
             value={params.get('adminId') ?? ''}
             onChange={(e) => update('adminId', e.target.value)}
           >
-            <option value="">All administrators</option>
+            <option value="">{tr('All administrators')}</option>
             {admins.data?.map((admin) => (
               <option value={admin.id} key={admin.id}>
                 {admin.fullName} @{admin.username}
@@ -113,12 +115,14 @@ export function BalanceAdjustmentsPage() {
             ))}
           </Select>
         </label>
-        {admins.isError && <Alert kind="error">Could not load administrator options.</Alert>}
+        {admins.isError && (
+          <Alert kind="error">{tr('Could not load administrator options.')}</Alert>
+        )}
         {!parsed.success && (
-          <Alert kind="error">Invalid filters. Clear Filters to try again.</Alert>
+          <Alert kind="error">{tr('Invalid filters. Clear Filters to try again.')}</Alert>
         )}
         {query.isPending && <Spinner />}
-        {query.isError && <Alert kind="error">Could not load adjustments.</Alert>}
+        {query.isError && <Alert kind="error">{tr('Could not load adjustments.')}</Alert>}
         {query.data && (
           <>
             {query.data.items.length ? (
@@ -127,7 +131,7 @@ export function BalanceAdjustmentsPage() {
                   <tr>
                     {['Transaction', 'Date', 'Customer', 'Admin', 'Type', 'Amount', 'Reason'].map(
                       (label) => (
-                        <Th key={label}>{label}</Th>
+                        <Th key={label}>{tr(label)}</Th>
                       ),
                     )}
                   </tr>
@@ -142,7 +146,9 @@ export function BalanceAdjustmentsPage() {
                         <div className="text-xs text-p-muted">{row.userEmail}</div>
                       </Td>
                       <Td>
-                        {row.adminName ? `${row.adminName} @${row.adminUsername ?? ''}` : 'System'}
+                        {tr(
+                          row.adminName ? `${row.adminName} @${row.adminUsername ?? ''}` : 'System',
+                        )}
                       </Td>
                       <Td>
                         <Badge tone="blue">{row.type}</Badge>
@@ -154,7 +160,7 @@ export function BalanceAdjustmentsPage() {
                 </tbody>
               </Table>
             ) : (
-              <EmptyState title="No balance adjustments found" />
+              <EmptyState title={tr('No balance adjustments found')} />
             )}
             <Pagination
               page={query.data.page}

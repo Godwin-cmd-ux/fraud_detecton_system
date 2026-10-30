@@ -1,3 +1,4 @@
+import { useLanguage, translate as tr } from '../../i18n';
 import type { ButtonHTMLAttributes } from 'react';
 
 export type ButtonVariant = 'primary' | 'success' | 'danger' | 'warning' | 'secondary' | 'ghost';
@@ -17,7 +18,16 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
 }
 
-export function Button({ variant = 'primary', size = 'md', loading, className = '', children, disabled, ...rest }: ButtonProps) {
+export function Button({
+  variant = 'primary',
+  size = 'md',
+  loading,
+  className = '',
+  children,
+  disabled,
+  ...rest
+}: ButtonProps) {
+  useLanguage();
   const pad = size === 'sm' ? 'px-3 py-1.5 text-sm' : 'px-4 py-2.5 text-sm';
   return (
     <button
@@ -26,8 +36,10 @@ export function Button({ variant = 'primary', size = 'md', loading, className = 
       disabled={disabled || loading}
       className={`inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${pad} ${styles[variant]} ${className}`}
     >
-      {loading && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />}
-      {children}
+      {loading && (
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+      )}
+      {tr(children)}
     </button>
   );
 }

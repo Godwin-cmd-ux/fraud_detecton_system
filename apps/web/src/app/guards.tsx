@@ -1,8 +1,10 @@
+import { useLanguage } from '../i18n';
 import { Navigate, Outlet, useLocation } from 'react-router';
 import { useMe } from '../api/auth';
 import { Spinner } from '../components/ui/Spinner';
 
 function FullPageSpinner() {
+  useLanguage();
   return (
     <div className="flex min-h-screen items-center justify-center">
       <Spinner />
@@ -12,6 +14,7 @@ function FullPageSpinner() {
 
 /** Renders the outlet for a signed-in customer; otherwise sends to login (admins to their dashboard). */
 export function RequireUser() {
+  useLanguage();
   const me = useMe();
   const location = useLocation();
   if (me.isPending) return <FullPageSpinner />;
@@ -21,6 +24,7 @@ export function RequireUser() {
 }
 
 export function RequireAdmin() {
+  useLanguage();
   const me = useMe();
   if (me.isPending) return <FullPageSpinner />;
   if (!me.data) return <Navigate to="/login" replace />;
@@ -30,6 +34,7 @@ export function RequireAdmin() {
 
 /** Public pages: a signed-in visitor goes straight to their dashboard. */
 export function RedirectIfAuthed() {
+  useLanguage();
   const me = useMe();
   if (me.isPending) return <FullPageSpinner />;
   if (me.data?.kind === 'user') return <Navigate to="/app/dashboard" replace />;
