@@ -178,6 +178,8 @@ export async function executeTransfer(d: TransferDeps, c: TransferCommand): Prom
       newBalance: Math.round((balance - c.amount) * 100) / 100,
       riskScore: outcome.fraudScore,
       riskLevel: outcome.riskLevel,
+      fraudPrediction: outcome.fraudPrediction,
+      createdAt: inserted.createdAt.toISOString(),
       flaggedForReview: isFlaggedForReview(outcome.fraudScore),
       ...(warning && { locationWarning: warning }),
     };

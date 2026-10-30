@@ -47,8 +47,10 @@ describe('withdrawal happy path and validation', () => {
       outcome: 'success',
       newBalance: 950_000,
       message: 'Withdrawal successful! You withdrew TSh 50,000.00',
+      fraudPrediction: 'LEGIT',
     });
     expect(await balanceOf()).toBe('950000.00');
+    expect(res.body.createdAt).toBe((await lastTx())!.createdAt.toISOString());
     expect(await lastTx()).toMatchObject({
       transactionType: 'withdrawal',
       status: 'SUCCESS',

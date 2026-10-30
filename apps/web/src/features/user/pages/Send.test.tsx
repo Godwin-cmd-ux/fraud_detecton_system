@@ -1,8 +1,9 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { api } from '../../../api/client';
+import { downloadReceipt } from '../../../lib/receipt';
 import type { SendContext } from '../../../api/types';
 import { SendPage } from './Send';
 
@@ -11,6 +12,10 @@ vi.mock('../../../api/client', async (original) => ({
   api: vi.fn(),
 }));
 const mockedApi = vi.mocked(api);
+vi.mock('../../../lib/receipt', async (original) => ({
+  ...(await original<typeof import('../../../lib/receipt')>()),
+  downloadReceipt: vi.fn(),
+}));
 
 afterEach(() => {
   cleanup();
@@ -80,6 +85,8 @@ describe('SendPage', () => {
           newBalance: 4_900_000,
           riskScore: 55,
           riskLevel: 'MEDIUM',
+          fraudPrediction: 'LEGIT',
+          createdAt: '2026-10-30T09:15:00.000Z',
           flaggedForReview: true,
           locationWarning: '⚠️ Location changed from Dar es Salaam to Mwanza (843 km away) in 5 minutes',
         };
@@ -98,6 +105,24 @@ describe('SendPage', () => {
     expect(
       screen.getByText('Location changed from Dar es Salaam to Mwanza (843 km away) in 5 minutes'),
     ).toBeInTheDocument();
+
+    // The form has cleared, but the receipt keeps what was submitted plus the server's record.
+    fireEvent.click(screen.getByRole('button', { name: 'Download receipt' }));
+    await waitFor(() => expect(downloadReceipt).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(downloadReceipt).mock.calls[0]).toEqual([
+      expect.objectContaining({
+        transactionId: 'TXN1',
+        direction: 'sent',
+        counterpartyName: 'Baraka Mushi',
+        amount: 100_000,
+        location: 'Dar es Salaam',
+        status: 'SUCCESS',
+        fraudScore: 55,
+        fraudPrediction: 'LEGIT',
+        createdAt: '2026-10-30T09:15:00.000Z',
+      }),
+      { name: 'Amina Hassan', email: 'a@x' },
+    ]);
   });
 
   it('refuses client-side when the amount exceeds the balance', async () => {

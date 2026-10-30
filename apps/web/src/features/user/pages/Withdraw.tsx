@@ -2,7 +2,7 @@ import { useLanguage, translate as tr } from '../../../i18n';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { FRAUD } from '@fraud/shared';
-import type { Location, WithdrawalResult } from '@fraud/shared';
+import type { Location, TransactionListItem, WithdrawalResult } from '@fraud/shared';
 import { useWithdraw, useWithdrawContext } from '../../../api/me';
 import { TopHeader } from '../../../components/layout/TopHeader';
 import { Alert } from '../../../components/ui/Alert';
@@ -13,7 +13,9 @@ import { Select } from '../../../components/ui/Select';
 import { Spinner } from '../../../components/ui/Spinner';
 import { Textarea } from '../../../components/ui/Textarea';
 import { formatTsh } from '../../../lib/format';
+import { receiptFromResult } from '../../../lib/receipt';
 import { BlockedPanel } from '../components/BlockedPanel';
+import { ReceiptButton } from '../components/ReceiptButton';
 
 const LOCKED_REASON = 'You have exceeded the number of failed withdrawal attempts.';
 
@@ -26,6 +28,7 @@ export function WithdrawPage() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [result, setResult] = useState<WithdrawalResult | null>(null);
+  const [receipt, setReceipt] = useState<TransactionListItem | null>(null);
   const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
@@ -47,12 +50,21 @@ export function WithdrawPage() {
 
   function onConfirm() {
     setConfirming(false);
+    // The form clears on success, so keep what was submitted for the receipt.
+    const submitted = {
+      direction: 'withdrawal' as const,
+      amount: value,
+      location: location as Location,
+      message,
+    };
+    setReceipt(null);
     withdraw.mutate(
       { amount: value, location: location as Location, message: message || undefined },
       {
         onSuccess: (r) => {
           setResult(r);
           if (r.outcome === 'success') {
+            setReceipt(receiptFromResult(r, submitted));
             setAmount('');
             setMessage('');
           }
@@ -92,6 +104,11 @@ export function WithdrawPage() {
         {result?.outcome === 'success' && (
           <Alert kind="success" className="mb-4">
             {tr(result.message)}
+            {receipt && (
+              <div className="mt-3">
+                <ReceiptButton transaction={receipt} variant="secondary" size="sm" />
+              </div>
+            )}
           </Alert>
         )}
         {result?.outcome === 'failed' && (

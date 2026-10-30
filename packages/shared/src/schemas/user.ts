@@ -48,6 +48,10 @@ export type TransferResult =
       newBalance: number;
       riskScore: number;
       riskLevel: RiskLevel;
+      /** Present on successful transfers and withdrawals so a receipt can be generated. */
+      fraudPrediction: FraudPrediction;
+      /** When the transaction was recorded (ISO 8601). */
+      createdAt: string;
       flaggedForReview: boolean;
       locationWarning?: string;
     };

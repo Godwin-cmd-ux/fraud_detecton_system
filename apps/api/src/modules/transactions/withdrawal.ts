@@ -162,6 +162,8 @@ export async function executeWithdrawal(d: TransferDeps, c: WithdrawalCommand): 
       newBalance: Math.round((balance - c.amount) * 100) / 100,
       riskScore: outcome.fraudScore,
       riskLevel: outcome.riskLevel,
+      fraudPrediction: outcome.fraudPrediction,
+      createdAt: inserted.createdAt.toISOString(),
       flaggedForReview: false,
     };
   });

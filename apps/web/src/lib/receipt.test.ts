@@ -61,6 +61,10 @@ describe('transaction receipt', () => {
     expect(securityCheck(tx({ fraudPrediction: null, fraudScore: 0 })).title).toBe(
       'Not yet analysed',
     );
+    // A transfer can succeed while the model predicts fraud; it is reviewed, not blocked.
+    expect(securityCheck(tx({ fraudPrediction: 'FRAUD', fraudScore: 95 })).title).toBe(
+      'Flagged for review',
+    );
   });
 
   it('names the file after the transaction', () => {

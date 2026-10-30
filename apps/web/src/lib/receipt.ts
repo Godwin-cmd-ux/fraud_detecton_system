@@ -1,6 +1,6 @@
 import type { jsPDF as JsPdf } from 'jspdf';
 import { FRAUD } from '@fraud/shared';
-import type { TransactionListItem } from '@fraud/shared';
+import type { TransactionListItem, TransferResult } from '@fraud/shared';
 import { translate as tr } from '../i18n';
 import { describeTransaction } from './transactions';
 import { formatDate, formatTsh } from './format';
@@ -28,7 +28,9 @@ const LINE: [number, number, number] = [225, 229, 221];
 
 /** What the customer should understand about the fraud screening of this transaction. */
 export function securityCheck(t: TransactionListItem): { tone: Tone; title: string; body: string } {
-  if (t.status === 'ABORTED' || t.fraudPrediction === 'FRAUD') {
+  // Only an aborted transaction was blocked; a successful one the model scored as fraud
+  // went through and is reviewed instead (as the API's own tests show).
+  if (t.status === 'ABORTED') {
     return {
       tone: 'risk',
       title: 'Blocked by fraud checks',
@@ -36,8 +38,9 @@ export function securityCheck(t: TransactionListItem): { tone: Tone; title: stri
     };
   }
   if (
-    t.fraudScore > FRAUD.FLAG_REVIEW_MIN_EXCLUSIVE &&
-    t.fraudScore <= FRAUD.FLAG_REVIEW_MAX_INCLUSIVE
+    t.fraudPrediction === 'FRAUD' ||
+    (t.fraudScore > FRAUD.FLAG_REVIEW_MIN_EXCLUSIVE &&
+      t.fraudScore <= FRAUD.FLAG_REVIEW_MAX_INCLUSIVE)
   ) {
     return {
       tone: 'warn',
@@ -173,6 +176,39 @@ export function buildReceipt(
     height - 10.5,
   );
   return doc;
+}
+
+type SuccessResult = Extract<TransferResult, { outcome: 'success' }>;
+
+/**
+ * Builds the receipt record for a transfer or withdrawal that just succeeded, from the
+ * server's result (ID, time, score, prediction) and the details the customer submitted.
+ */
+export function receiptFromResult(
+  result: SuccessResult,
+  submitted: {
+    direction: 'sent' | 'withdrawal';
+    amount: number;
+    counterpartyName?: string | null;
+    location: string;
+    message?: string;
+  },
+): TransactionListItem {
+  return {
+    id: 0,
+    transactionId: result.transactionId,
+    type: submitted.direction === 'withdrawal' ? 'withdrawal' : 'transfer',
+    direction: submitted.direction,
+    counterpartyName: submitted.counterpartyName ?? null,
+    amount: submitted.amount,
+    status: 'SUCCESS',
+    fraudScore: result.riskScore,
+    fraudPrediction: result.fraudPrediction,
+    riskLevel: result.riskLevel,
+    message: submitted.message || null,
+    location: submitted.location,
+    createdAt: result.createdAt,
+  };
 }
 
 /** Loads jsPDF on demand (it is large) and saves the receipt as a file. */

@@ -46,18 +46,18 @@ function isTransactionIdCollision(err: unknown): boolean {
 export async function insertTransaction(
   tx: Db,
   t: NewTransaction,
-): Promise<{ id: number; transactionId: string }> {
+): Promise<{ id: number; transactionId: string; createdAt: Date }> {
   let transactionId = t.transactionId;
   for (let attempt = 1; ; attempt++) {
     try {
-      const id = await tx.transaction(async (sp) => {
-        const [row] = await sp
+      const row = await tx.transaction(async (sp) => {
+        const [inserted] = await sp
           .insert(transactions)
           .values({ ...t, transactionId, amount: money(t.amount), fraudScore: money(t.fraudScore) })
-          .returning({ id: transactions.id });
-        return row!.id;
+          .returning({ id: transactions.id, createdAt: transactions.createdAt });
+        return inserted!;
       });
-      return { id, transactionId };
+      return { id: row.id, transactionId, createdAt: row.createdAt };
     } catch (err) {
       if (!isTransactionIdCollision(err) || attempt >= MAX_ID_ATTEMPTS) throw err;
       transactionId = newTransactionId(new Date());

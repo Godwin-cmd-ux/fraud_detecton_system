@@ -58,11 +58,14 @@ describe('transfer happy path and validation', () => {
       riskScore: 0,
       riskLevel: 'LOW',
       flaggedForReview: false,
+      fraudPrediction: 'LEGIT',
       message: 'Transaction successful! You sent TSh 100,000.00 to Baraka Mushi',
     });
     expect(await balanceOf(A.id)).toBe('4900000.00');
     expect(await balanceOf(B.id)).toBe('1100000.00');
     const tx = await lastTx();
+    // The response carries the stored timestamp so the client can issue a receipt.
+    expect(res.body.createdAt).toBe(tx!.createdAt.toISOString());
     expect(tx).toMatchObject({
       status: 'SUCCESS',
       transactionType: 'transfer',
@@ -181,7 +184,7 @@ describe('ML integration', () => {
   it('stores a medium score and flags for review', async () => {
     await setup({ ml: mlMock({ ...ML_FALLBACK, riskScore: 65, prediction: 'FRAUD', riskLevel: 'MEDIUM', predictionTime: NOON }) });
     const res = await send({});
-    expect(res.body).toMatchObject({ outcome: 'success', riskScore: 65, flaggedForReview: true });
+    expect(res.body).toMatchObject({ outcome: 'success', riskScore: 65, flaggedForReview: true, fraudPrediction: 'FRAUD' });
     expect(await lastTx()).toMatchObject({ fraudScore: '65.00', fraudPrediction: 'FRAUD', riskLevel: 'MEDIUM' });
   });
 

@@ -2,7 +2,7 @@ import { useLanguage, translate as tr } from '../../../i18n';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { FRAUD } from '@fraud/shared';
-import type { Location, TransferResult } from '@fraud/shared';
+import type { Location, TransactionListItem, TransferResult } from '@fraud/shared';
 import { useSendContext, useTransfer } from '../../../api/me';
 import { TopHeader } from '../../../components/layout/TopHeader';
 import { Alert } from '../../../components/ui/Alert';
@@ -13,7 +13,9 @@ import { Select } from '../../../components/ui/Select';
 import { Spinner } from '../../../components/ui/Spinner';
 import { Textarea } from '../../../components/ui/Textarea';
 import { formatTsh } from '../../../lib/format';
+import { receiptFromResult } from '../../../lib/receipt';
 import { BlockedPanel } from '../components/BlockedPanel';
+import { ReceiptButton } from '../components/ReceiptButton';
 
 interface Pending {
   title: string;
@@ -31,6 +33,7 @@ export function SendPage() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [result, setResult] = useState<TransferResult | null>(null);
+  const [receipt, setReceipt] = useState<TransactionListItem | null>(null);
   const [confirmQueue, setConfirmQueue] = useState<Pending[]>([]);
 
   useEffect(() => {
@@ -109,6 +112,16 @@ export function SendPage() {
       return;
     }
     setConfirmQueue([]);
+    // The form clears on success, so keep what was submitted for the receipt.
+    const submitted = {
+      direction: 'sent' as const,
+      amount: Number(amount),
+      counterpartyName:
+        context.data?.recipients.find((r) => r.id === Number(receiverId))?.fullName ?? null,
+      location: location as Location,
+      message,
+    };
+    setReceipt(null);
     transfer.mutate(
       {
         receiverId: Number(receiverId),
@@ -120,6 +133,7 @@ export function SendPage() {
         onSuccess: (r) => {
           setResult(r);
           if (r.outcome === 'success') {
+            setReceipt(receiptFromResult(r, submitted));
             setAmount('');
             setMessage('');
             setReceiverId('');
@@ -159,6 +173,11 @@ export function SendPage() {
             {result.flaggedForReview && (
               <div className="mt-2 border-t border-ok/20 pt-2">
                 {tr('This transaction was flagged for review. Please monitor your account.')}
+              </div>
+            )}
+            {receipt && (
+              <div className="mt-3">
+                <ReceiptButton transaction={receipt} variant="secondary" size="sm" />
               </div>
             )}
           </Alert>
