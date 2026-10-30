@@ -4,6 +4,7 @@ import type { FormEvent } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router';
 import type { Principal } from '@fraud/shared';
+import { Lock, UserRound } from 'lucide-react';
 import { api } from '../../../api/client';
 import {
   AuthError,
@@ -85,6 +86,7 @@ export function Login() {
       <form onSubmit={submit} className="space-y-4">
         <AuthField
           name="login"
+          icon={<UserRound size={16} />}
           label={tr(role === 'admin' ? 'Username or Email' : 'Email, Phone or Card Number')}
           placeholder={tr(role === 'admin' ? 'Username or email' : 'Email, phone or card number')}
           autoComplete="username"
@@ -98,6 +100,8 @@ export function Login() {
           label={tr('Password')}
           type="password"
           autoComplete="current-password"
+          icon={<Lock size={16} />}
+          revealable
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required

@@ -34,6 +34,14 @@ describe('Login', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Admin' }));
     expect(screen.getByLabelText('Username or Email')).toHaveValue('');
   });
+  it('shows and hides the password with the eye toggle', () => {
+    show(<Login />); fill('Password', 'secret123');
+    expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'password');
+    fireEvent.click(screen.getByRole('button', { name: 'Show password' }));
+    expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'text');
+    fireEvent.click(screen.getByRole('button', { name: 'Hide password' }));
+    expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'password');
+  });
   it('renders failed credentials and preserves the submitted role', async () => {
     mockedApi.mockRejectedValue(new ApiError(401, 'INVALID_CREDENTIALS', 'Invalid password. 2 attempts remaining', { attemptsRemaining: '2' }));
     show(<Login />); fill('Email, Phone or Card Number', 'user@example.com'); fill('Password', 'badpassword');

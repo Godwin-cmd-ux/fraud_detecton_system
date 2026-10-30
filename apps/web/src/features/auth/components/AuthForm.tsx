@@ -139,6 +139,7 @@ export function AuthField({
             aria-label={tr(revealed ? 'Hide password' : 'Show password')}
             aria-pressed={revealed}
             aria-controls={id}
+            disabled={props.disabled}
             className="absolute top-1/2 right-2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-s-dim transition hover:bg-s-panel2 hover:text-s-text"
           >
             {revealed ? (
