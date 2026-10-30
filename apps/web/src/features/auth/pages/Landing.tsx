@@ -2,6 +2,9 @@ import { useLanguage, translate as tr } from '../../../i18n';
 import { Link } from 'react-router';
 import { formatTsh } from '../../../lib/format';
 import { useReveal } from '../../../lib/useReveal';
+import { PrivacySection } from '../components/landing/PrivacySection';
+import { RiskSimulator } from '../components/landing/RiskSimulator';
+import { RulesSection } from '../components/landing/RulesSection';
 import { LanguageSwitcher } from '../../../i18n/LanguageSwitcher';
 import {
   ShieldCheck,
@@ -61,6 +64,20 @@ const steps = [
   'Evaluate risk signals',
   'Record the outcome',
 ];
+
+function SectionHead({ eyebrow, title, body }: { eyebrow: string; title: string; body: string }) {
+  useLanguage();
+  return (
+    <div className="reveal mb-10 max-w-2xl">
+      <p className="eyebrow mb-4">
+        <span className="h-px w-8 bg-s-teal/60" aria-hidden="true" />
+        {tr(eyebrow)}
+      </p>
+      <h2 className="text-3xl font-medium tracking-tight sm:text-4xl">{tr(title)}</h2>
+      <p className="mt-4 text-[16px] leading-relaxed text-s-dim">{tr(body)}</p>
+    </div>
+  );
+}
 
 function ScreeningPanel() {
   useLanguage();
@@ -153,8 +170,9 @@ export function Landing() {
           {tr('Sentinel')}
         </Link>
         <div className="site-nav__links flex items-center justify-self-end text-sm">
+          <a href="#try-it">{tr('Try it')}</a>
           <a href="#how-it-works">{tr('How it works')}</a>
-          <a href="#capabilities">{tr('Capabilities')}</a>
+          <a href="#security">{tr('Security')}</a>
           <Link to="/register" className="site-nav__extra">
             {tr('Create account')}
           </Link>
@@ -215,6 +233,30 @@ export function Landing() {
         </div>
       </section>
 
+      <section id="try-it" className="steps-section">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <SectionHead
+            eyebrow="Try it"
+            title="Run a transfer through the checks"
+            body="Change the amount, time, location or recent activity and watch the risk score respond, using the same rules as real transfers."
+          />
+          <div className="reveal">
+            <RiskSimulator />
+          </div>
+        </div>
+      </section>
+
+      <section id="rules" className="steps-section">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <SectionHead
+            eyebrow="What we watch for"
+            title="Clear rules, not guesswork"
+            body="Each transfer is checked against these patterns before any money moves."
+          />
+          <RulesSection />
+        </div>
+      </section>
+
       <section id="how-it-works" className="steps-section">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <h2 className="reveal mb-12 text-3xl font-medium tracking-tight sm:text-4xl">
@@ -230,6 +272,17 @@ export function Landing() {
               </li>
             ))}
           </ol>
+        </div>
+      </section>
+
+      <section id="security" className="steps-section">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <SectionHead
+            eyebrow="Security"
+            title="Your money stays private"
+            body="Protection that works on your side too, not only against fraudsters."
+          />
+          <PrivacySection />
         </div>
       </section>
 

@@ -72,6 +72,24 @@ export const messages: Record<string, string> = {
   'Received from {0}': 'Imepokelewa kutoka kwa {0}',
   'Sent to {0}': 'Imetumwa kwa {0}',
   'More actions for {0}': 'Vitendo zaidi kwa {0}',
+  '{0} transfers over {1} totalling more than {2} within {3} minutes are blocked.':
+    'Miamala {0} inayozidi {1} yenye jumla zaidi ya {2} ndani ya dakika {3} huzuiwa.',
+  'Sending to {0} different people within {1} minutes is blocked.':
+    'Kutuma kwa watu {0} tofauti ndani ya dakika {1} huzuiwa.',
+  'A recipient receiving from {0} different senders within {1} minutes is blocked.':
+    'Mpokeaji anayepokea kutoka kwa watumaji {0} tofauti ndani ya dakika {1} huzuiwa.',
+  '{0} failed withdrawal attempts block further withdrawals, and any transfer within {1} minutes.':
+    'Majaribio {0} ya kutoa pesa yaliyoshindikana huzuia utoaji zaidi, pamoja na muamala wowote ndani ya dakika {1}.',
+  'Transfers over {0} between midnight and 6:00, or over {1} at any time, are blocked.':
+    'Miamala inayozidi {0} kati ya saa 6 usiku na saa 12 asubuhi, au inayozidi {1} wakati wowote, huzuiwa.',
+  'An XGBoost model scores every transfer on 11 signals. Scores between {0} and {1} are flagged for an administrator to review.':
+    'Modeli ya XGBoost hupima kila muamala kwa viashiria 11. Alama kati ya {0} na {1} huwekwa ili msimamizi azikague.',
+  'Your balance stays masked until you confirm your password, then hides again after {0} minutes.':
+    'Salio lako hubaki limefichwa hadi uthibitishe nenosiri lako, kisha hujificha tena baada ya dakika {0}.',
+  'Your transaction list needs your password to open and locks itself after {0} minutes.':
+    'Orodha ya miamala yako inahitaji nenosiri kufunguka na hujifunga yenyewe baada ya dakika {0}.',
+  '{0} wrong passwords lock sign-in for {1} minutes.':
+    'Manenosiri {0} yasiyo sahihi hufunga uingiaji kwa dakika {1}.',
   'Showing {0} of {1} users': 'Inaonyesha watumiaji {0} kati ya {1}',
   '{0} analyzed · avg {1}% · Highest: {2}%': '{0} imechambuliwa · wastani {1}% · Juu zaidi: {2}%',
   '{0}% of total': '{0}% ya jumla',
