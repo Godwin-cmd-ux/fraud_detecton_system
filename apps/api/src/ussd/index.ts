@@ -1,5 +1,6 @@
 import type { Db } from '../db/client';
 import type { MlClient } from '../modules/fraud/mlClient';
+import type { SmsClient } from '../modules/sms/client';
 import { HttpError } from '../lib/errors';
 import { con, end, fit } from './text';
 import { normalizePhone } from './phone';
@@ -32,6 +33,8 @@ export interface UssdConfig {
 export interface UssdDeps {
   db: Db;
   ml: MlClient;
+  /** Absent in tests; wallet services then skip their SMS notices. */
+  sms?: SmsClient;
   now: () => Date;
   config: UssdConfig;
 }
@@ -288,6 +291,7 @@ async function run(
   const ctx: Ctx = {
     db: tx,
     ml: deps.ml,
+    ...(deps.sms ? { sms: deps.sms } : {}),
     now,
     sessionId: input.sessionId,
     phone,

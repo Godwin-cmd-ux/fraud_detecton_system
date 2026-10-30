@@ -15,6 +15,7 @@ import {
   incrementFailedWithdrawal,
   resetFailedWithdrawals,
 } from '../fraud/velocity';
+import { notifyTransactionBlocked, notifyWithdrawal } from '../sms/notifications';
 import { findActiveUserById, updateUserLocation } from '../users/repo';
 import type { UserRow } from '../users/repo';
 import { debitBalance, insertTransaction } from './repo';
@@ -76,6 +77,12 @@ export async function executeWithdrawal(d: TransferDeps, c: WithdrawalCommand): 
       fraudPrediction: 'FRAUD',
       riskLevel: 'HIGH',
     });
+    void notifyTransactionBlocked(d.sms, {
+      phone: user.phone,
+      kind: 'withdrawal',
+      reason: 'multiple consecutive failed withdrawal attempts',
+      reference: inserted.transactionId,
+    }).catch(() => undefined);
     return {
       outcome: 'blocked',
       reason: 'Multiple consecutive failed withdrawal attempts',
@@ -135,7 +142,7 @@ export async function executeWithdrawal(d: TransferDeps, c: WithdrawalCommand): 
   };
 
   // 6. Commit.
-  return d.db.transaction(async (tx) => {
+  const result = await d.db.transaction(async (tx): Promise<WithdrawalResult> => {
     if (outcome.block) {
       const reason = outcome.blockReason ?? 'Fraud detected';
       const inserted = await insertTransaction(tx, { ...scored, status: 'ABORTED', message: `BLOCKED: ${reason} | ${message}` });
@@ -167,4 +174,24 @@ export async function executeWithdrawal(d: TransferDeps, c: WithdrawalCommand): 
       flaggedForReview: false,
     };
   });
+
+  // 7. Confirm the withdrawal by SMS once the row is committed.
+  if (result.outcome === 'success') {
+    void notifyWithdrawal(d.sms, {
+      userName: user.fullName,
+      phone: user.phone,
+      amount: c.amount,
+      balance: result.newBalance,
+      reference: result.transactionId,
+    }).catch(() => undefined);
+  } else if (result.outcome === 'blocked') {
+    void notifyTransactionBlocked(d.sms, {
+      phone: user.phone,
+      kind: 'withdrawal',
+      reason: result.reason,
+      reference: result.transactionId,
+    }).catch(() => undefined);
+  }
+
+  return result;
 }

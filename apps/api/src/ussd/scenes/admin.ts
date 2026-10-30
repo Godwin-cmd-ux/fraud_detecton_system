@@ -28,7 +28,7 @@ import {
 } from '../queries';
 import type { AdminRow, CompactTx, CompactUser } from '../queries';
 import { createUserViaUssd } from '../register';
-import { amount as numText, compact, firstName, money, shortDate, txLine } from '../text';
+import { amount as numText, firstName, money, shortDate, txLine } from '../text';
 import { handlePinFailure } from './pin';
 
 /**
@@ -1097,6 +1097,7 @@ defineScene(
       c.ip,
       c.userAgent,
       c.now,
+      c.sms,
     );
 
     return {

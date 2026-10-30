@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@fraud/shared": "workspace:*",
+    "africastalking": "^0.8.4",
     "bcryptjs": "^3.0.0",
     "connect-pg-simple": "^10.0.0",
     "cors": "^2.8.5",

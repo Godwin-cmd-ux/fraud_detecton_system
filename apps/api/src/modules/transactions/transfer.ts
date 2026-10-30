@@ -12,6 +12,8 @@ import { checkLargeVolume, checkManyReceivers, checkManySenders } from '../fraud
 import type { PatternBlock, VelocityContext } from '../fraud/patterns';
 import { applyTransferRules, isFlaggedForReview } from '../fraud/rules';
 import { getLocationChange, getVelocityContext } from '../fraud/velocity';
+import { notifyTransactionBlocked, notifyTransferReceived, notifyTransferSent } from '../sms/notifications';
+import type { SmsClient } from '../sms/client';
 import { findActiveUserById, findUserById, updateUserLocation } from '../users/repo';
 import type { UserRow } from '../users/repo';
 import { creditBalance, debitBalance, insertTransaction } from './repo';
@@ -21,6 +23,8 @@ export interface TransferDeps {
   db: Db;
   ml: MlClient;
   now: () => Date;
+  /** Absent in tests and when SMS is not configured. */
+  sms?: SmsClient;
 }
 
 export interface TransferCommand {
@@ -106,7 +110,16 @@ export async function executeTransfer(d: TransferDeps, c: TransferCommand): Prom
     checkLargeVolume(c.amount, ctx, message) ??
     checkManyReceivers(ctx, message) ??
     checkManySenders(ctx, message);
-  if (pattern) return recordPatternBlock(d.db, row, pattern);
+  if (pattern) {
+    const blocked = await recordPatternBlock(d.db, row, pattern);
+    void notifyTransactionBlocked(d.sms, {
+      phone: sender.phone,
+      kind: 'transfer',
+      reason: pattern.userMessage,
+      reference: blocked.transactionId,
+    }).catch(() => undefined);
+    return blocked;
+  }
 
   // 4. Location.
   const change = await getLocationChange(d.db, { userId: sender.id, newLocation: c.location, now });
@@ -149,7 +162,7 @@ export async function executeTransfer(d: TransferDeps, c: TransferCommand): Prom
   };
 
   // 8. Commit.
-  return d.db.transaction(async (tx) => {
+  const result = await d.db.transaction(async (tx): Promise<TransferResult> => {
     if (outcome.block) {
       const reason = outcome.blockReason ?? 'Fraud detected';
       const inserted = await insertTransaction(tx, { ...scored, status: 'ABORTED', message: `BLOCKED: ${reason} | ${message}` });
@@ -184,4 +197,29 @@ export async function executeTransfer(d: TransferDeps, c: TransferCommand): Prom
       ...(warning && { locationWarning: warning }),
     };
   });
+
+  // 9. Notify both parties after the money has moved and the row is committed.
+  if (result.outcome === 'success') {
+    const notice = {
+      senderName: sender.fullName,
+      senderPhone: sender.phone,
+      senderBalance: result.newBalance,
+      receiverName: receiver!.fullName,
+      receiverPhone: receiver!.phone,
+      receiverBalance: Math.round((num(receiver!.balance) + c.amount) * 100) / 100,
+      amount: c.amount,
+      reference: result.transactionId,
+    };
+    void notifyTransferSent(d.sms, notice).catch(() => undefined);
+    void notifyTransferReceived(d.sms, notice).catch(() => undefined);
+  } else if (result.outcome === 'blocked') {
+    void notifyTransactionBlocked(d.sms, {
+      phone: sender.phone,
+      kind: 'transfer',
+      reason: result.reason,
+      reference: result.transactionId,
+    }).catch(() => undefined);
+  }
+
+  return result;
 }

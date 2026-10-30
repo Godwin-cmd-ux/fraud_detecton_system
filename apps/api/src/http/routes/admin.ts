@@ -134,6 +134,7 @@ export function adminRoutes(deps: AppDeps): Router {
           clientIp(req),
           req.get('user-agent') ?? null,
           deps.now(),
+          deps.sms,
         ),
       );
     }),

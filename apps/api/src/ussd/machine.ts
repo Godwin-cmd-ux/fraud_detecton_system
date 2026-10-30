@@ -1,6 +1,7 @@
 import type { Db } from '../db/client';
 import type { MlClient } from '../modules/fraud/mlClient';
 import type { AdminRow } from './repo';
+import type { SmsClient } from '../modules/sms/client';
 import type { UserRow } from '../modules/users/repo';
 
 /**
@@ -31,6 +32,8 @@ export interface UssdState {
 export interface Ctx {
   db: Db;
   ml: MlClient;
+  /** Absent in tests; wallet services then skip their SMS notices. */
+  sms?: SmsClient;
   now: Date;
   sessionId: string;
   /** Canonical `+255XXXXXXXXX` number the gateway reported. */
@@ -90,7 +93,7 @@ export const isRootScene = (name: string): boolean => name.endsWith('.main');
 /** Small helpers shared by every scene. */
 export const BACK = '0. Back';
 
-export function backTo(scene: string): string {
+export function backTo(_scene: string): string {
   return `\n${BACK}`;
 }
 

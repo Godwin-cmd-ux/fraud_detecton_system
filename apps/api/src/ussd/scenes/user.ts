@@ -7,7 +7,7 @@ import { executeWithdrawal } from '../../modules/transactions/withdrawal';
 import { choose, defineScene, parseAmount, parseIndex } from '../machine';
 import type { Ctx, Result } from '../machine';
 import { normalizePhone } from '../phone';
-import { PIN_POLICY, readPinState, verifyPin } from '../pin';
+import { readPinState, verifyPin } from '../pin';
 import {
   findTransactionByRef,
   getTransaction,
@@ -15,7 +15,7 @@ import {
   rawUserByPhone,
 } from '../queries';
 import type { CompactTx, UserRow } from '../queries';
-import { amount, firstName, money, shortDate, STATUS_LABEL, txLine } from '../text';
+import { firstName, money, shortDate, txLine } from '../text';
 import { handlePinFailure, PIN_PROMPT } from './pin';
 
 /**
@@ -31,7 +31,12 @@ const me = (c: Ctx): UserRow => {
   return c.meUser;
 };
 
-const transferDeps = (c: Ctx) => ({ db: c.db, ml: c.ml, now: () => c.now });
+const transferDeps = (c: Ctx) => ({
+  db: c.db,
+  ml: c.ml,
+  now: () => c.now,
+  ...(c.sms ? { sms: c.sms } : {}),
+});
 
 /** USSD has no GPS; the customer's last known city keeps location scoring meaningful. */
 const locationOf = (u: UserRow): Location =>

@@ -79,6 +79,7 @@ export function ussdRoutes(deps: AppDeps): Router {
       {
         db: deps.db,
         ml: deps.ml,
+        sms: deps.sms,
         now: deps.now,
         config: {
           sessionTtlSec: env.USSD_SESSION_TTL_SEC,

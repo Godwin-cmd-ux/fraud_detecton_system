@@ -22,6 +22,12 @@ const envSchema = z.object({
   USSD_ALLOWED_IPS: z.string().default(''),
   USSD_SESSION_TTL_SEC: z.coerce.number().int().positive().default(180),
   USSD_RATE_LIMIT_PER_MIN: z.coerce.number().int().positive().default(30),
+  /** Africa's Talking SMS credentials. Leaving the key empty disables sending. */
+  AT_API_KEY: z.string().default(''),
+  /** Your app username, or `sandbox` while using a sandbox app. */
+  AT_USERNAME: z.string().default('sandbox'),
+  /** Optional alphanumeric sender id or short code; empty uses the AT default. */
+  AT_SENDER_ID: z.string().default(''),
 });
 
 export const env = envSchema.parse(process.env);
