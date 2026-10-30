@@ -1,7 +1,13 @@
 import { useLanguage } from './index';
 import { Globe2 } from 'lucide-react';
 
-export function LanguageSwitcher({ dark = false, pill = false }: { dark?: boolean; pill?: boolean }) {
+export function LanguageSwitcher({
+  dark = false,
+  pill = false,
+}: {
+  dark?: boolean;
+  pill?: boolean;
+}) {
   const { language, setLanguage, tr } = useLanguage();
   if (pill) {
     return (
@@ -27,15 +33,15 @@ export function LanguageSwitcher({ dark = false, pill = false }: { dark?: boolea
   }
   return (
     <label
-      className={`no-print inline-flex shrink-0 items-center gap-2 text-sm ${dark ? 'text-white' : ''}`}
+      className={`language-select no-print inline-flex shrink-0 items-center gap-2 rounded-lg px-3 text-xs ${dark ? 'text-s-text' : 'text-p-muted'}`}
     >
       <Globe2 size={16} aria-hidden="true" />
-      <span>{tr('Language')}</span>
+      <span className="sr-only">{tr('Language')}</span>
       <select
         aria-label={tr('Language')}
         value={language}
         onChange={(event) => setLanguage(event.target.value === 'sw' ? 'sw' : 'en')}
-        className={`min-h-10 rounded-lg border px-2 py-1 text-sm ${dark ? 'border-white/30 bg-slate-900 text-white' : 'border-slate-300 bg-white text-slate-900'}`}
+        className={`rounded-md text-xs ${dark ? 'text-s-text' : 'text-p-text'}`}
       >
         <option value="en" lang="en">
           English

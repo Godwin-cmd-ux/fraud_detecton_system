@@ -4,6 +4,7 @@ import { messages } from './messages';
 export const sw: Record<string, string> = {
   ...messages,
   Language: 'Lugha',
+  'Skip to content': 'Ruka hadi maudhui',
   Confirm: 'Thibitisha',
   Transaction: 'Muamala',
   '30% · Low': '30% · Ndogo',

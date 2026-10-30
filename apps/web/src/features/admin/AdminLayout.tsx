@@ -72,14 +72,14 @@ export function AdminLayout() {
 
   return (
     <SidebarShell
-      brand="🛡️ FraudDetect"
+      brand="Sentinel"
       subtitle={tr('Admin Control Panel')}
       profile={{ initial: name.charAt(0).toUpperCase(), name, role: 'Administrator' }}
       items={items}
       footer={
         <>
           <div>{tr('Fraud Detection System v2.0')}</div>
-          <div>{tr('🤖 AI-Powered Fraud Detection')}</div>
+          <div>{tr('Transaction screening')}</div>
         </>
       }
     />

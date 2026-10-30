@@ -1,9 +1,8 @@
 import { useLanguage, translate as tr } from '../../../i18n';
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { formatTsh } from '../../../lib/format';
 import { LanguageSwitcher } from '../../../i18n/LanguageSwitcher';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, ArrowUpRight, Wallet, ScanLine, ListChecks } from 'lucide-react';
 
 interface Activity {
   id: number;
@@ -13,40 +12,11 @@ interface Activity {
 }
 export function Landing() {
   useLanguage();
-  const [activity, setActivity] = useState<Activity[]>([
+  const activity: Activity[] = [
     { id: 1, amount: 125_000, status: 'Cleared', score: 12 },
     { id: 2, amount: 2_500_000, status: 'Flagged', score: 86 },
     { id: 3, amount: 50_000, status: 'Scanning' },
-  ]);
-  useEffect(() => {
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
-    let timer: number | undefined;
-    let id = 3;
-    function start() {
-      window.clearInterval(timer);
-      if (reduced.matches) return;
-      timer = window.setInterval(() => {
-        const probability = Math.random();
-        const row: Activity = {
-          id: ++id,
-          amount: Math.floor(Math.random() * 5_000 + 1) * 1000,
-          status: probability < 0.14 ? 'Flagged' : probability < 0.38 ? 'Scanning' : 'Cleared',
-        };
-        if (row.status !== 'Scanning')
-          row.score =
-            row.status === 'Flagged'
-              ? 68 + Math.floor(Math.random() * 31)
-              : 2 + Math.floor(Math.random() * 21);
-        setActivity((previous) => [row, ...previous].slice(0, 9));
-      }, 1900);
-    }
-    start();
-    reduced.addEventListener('change', start);
-    return () => {
-      window.clearInterval(timer);
-      reduced.removeEventListener('change', start);
-    };
-  }, []);
+  ];
   return (
     <main className="landing-page theme-sentinel min-h-screen bg-s-bg text-s-text">
       <nav
@@ -83,10 +53,17 @@ export function Landing() {
             )}
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
-            <Link to="/register" className="rounded-lg bg-s-teal px-6 py-3 font-semibold text-s-bg">
+            <Link
+              to="/register"
+              className="inline-flex items-center justify-center gap-3 rounded-md bg-s-teal px-6 py-3.5 font-medium text-s-bg"
+            >
               {tr('Create your account')}
+              <ArrowUpRight size={18} aria-hidden="true" />
             </Link>
-            <Link to="/login" className="rounded-lg border border-s-line px-6 py-3">
+            <Link
+              to="/login"
+              className="inline-flex items-center justify-center rounded-md border border-s-line px-6 py-3.5"
+            >
               {tr('Sign in')}
             </Link>
           </div>
@@ -118,9 +95,12 @@ export function Landing() {
               </li>
             ))}
           </ul>
+          <p className="screening-summary">
+            {tr('Combine model risk scores with fraud rules and administrator review.')}
+          </p>
         </div>
       </section>
-      <section id="capabilities" className="mx-auto max-w-6xl px-6 py-12">
+      <section id="capabilities" className="capabilities-section mx-auto max-w-6xl px-6 py-16">
         <h2 className="mb-8 font-display text-3xl font-bold">{tr('Built around your wallet')}</h2>
         <div className="grid gap-5 md:grid-cols-3">
           {[
@@ -136,8 +116,20 @@ export function Landing() {
               'Review the signals',
               'Combine model risk scores with fraud rules and administrator review.',
             ],
-          ].map(([title, body]) => (
-            <article key={title} className="capability-card rounded-xl border border-s-line bg-s-panel p-6">
+          ].map(([title, body], index) => (
+            <article
+              key={title}
+              className="capability-card rounded-xl border border-s-line bg-s-panel p-6"
+            >
+              <span className="capability-icon" aria-hidden="true">
+                {index === 0 ? (
+                  <Wallet size={26} />
+                ) : index === 1 ? (
+                  <ScanLine size={26} />
+                ) : (
+                  <ListChecks size={26} />
+                )}
+              </span>
               <h3 className="mb-3 text-xl font-semibold">{tr(title)}</h3>
               <p className="text-s-dim">{tr(body)}</p>
             </article>
@@ -161,14 +153,14 @@ export function Landing() {
         </ol>
       </section>
       <section className="mx-auto max-w-6xl px-6 py-16">
-        <div className="rounded-2xl bg-s-panel p-8">
+        <div className="closing-panel rounded-xl p-8 sm:p-12">
           <h2 className="mb-4 text-3xl font-bold">{tr('Get started with Sentinel')}</h2>
           <p className="mb-6 text-s-dim">
             {tr('Create an account, complete administrator approval, and access your wallet.')}
           </p>
           <Link
             to="/register"
-            className="inline-block rounded-lg bg-s-teal px-6 py-3 font-semibold text-s-bg"
+            className="inline-block inline-flex items-center justify-center gap-3 rounded-md bg-s-teal px-6 py-3.5 font-medium text-s-bg"
           >
             {tr('Create account')}
           </Link>

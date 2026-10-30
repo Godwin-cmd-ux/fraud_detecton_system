@@ -8,12 +8,29 @@ import { AdminTransactionsPage } from '../features/admin/pages/Transactions';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { getLanguage, getLocale, LANGUAGE_STORAGE_KEY, setLanguage, translate } from './index';
 import { localizeValidity } from './validation';
+import { StatCard } from '../components/ui/StatCard';
+import { EmptyState } from '../components/ui/Table';
 
 vi.mock('../api/client', async (original) => ({
   ...(await original<typeof import('../api/client')>()),
   api: vi.fn(),
 }));
 const mockedApi = vi.mocked(api);
+it('updates shared descriptions when switching languages without changing numeric values', () => {
+  render(
+    <>
+      <LanguageSwitcher />
+      <StatCard label="Transactions" value={123} sub="Sign in" />
+      <EmptyState title="Transactions">Create account</EmptyState>
+    </>,
+  );
+  fireEvent.change(screen.getByRole('combobox', { name: 'Language' }), {
+    target: { value: 'sw' },
+  });
+  expect(screen.getByText(translate('Sign in'))).toBeInTheDocument();
+  expect(screen.getByText(translate('Create account'))).toBeInTheDocument();
+  expect(screen.getByText('123')).toBeInTheDocument();
+});
 afterEach(() => {
   cleanup();
   setLanguage('en');

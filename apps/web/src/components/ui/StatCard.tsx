@@ -1,15 +1,16 @@
 import { useLanguage, translate as tr } from '../../i18n';
 import type { ReactNode } from 'react';
+import { DisplayIcon } from './DisplayIcon';
 
 export type StatTone = 'blue' | 'green' | 'red' | 'amber' | 'purple' | 'gray';
 
 const accents: Record<StatTone, string> = {
-  blue: 'border-l-p-primary',
-  green: 'border-l-p-success',
-  red: 'border-l-p-danger',
-  amber: 'border-l-p-warning',
-  purple: 'border-l-[#8b5cf6]',
-  gray: 'border-l-p-muted',
+  blue: 'text-p-primary bg-p-primary/7',
+  green: 'text-p-success bg-p-success/7',
+  red: 'text-p-danger bg-p-danger/7',
+  amber: 'text-p-warning bg-p-warning/7',
+  purple: 'text-p-primary bg-p-primary/7',
+  gray: 'text-p-muted bg-p-bg',
 };
 
 export function StatCard({
@@ -27,18 +28,24 @@ export function StatCard({
 }) {
   useLanguage();
   return (
-    <div
-      className={`rounded-card border border-p-border border-l-4 bg-white p-5 shadow-sm ${accents[tone]}`}
-    >
+    <div className="stat-card rounded-card border border-p-border bg-white p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-xs font-semibold tracking-wide text-p-muted uppercase">
-            {tr(label)}
+          <div className="text-sm font-medium text-p-muted">
+            {tr(typeof label === 'string' ? label.replace(/^[^\p{L}\p{N}]+/u, '') : label)}
           </div>
-          <div className="mt-1 truncate text-2xl font-bold text-p-dark">{tr(value)}</div>
-          {sub && <div className="mt-1 text-xs text-p-muted">{sub}</div>}
+          <div className="mt-4 break-words text-[1.75rem] leading-tight font-semibold tracking-tight text-p-dark tabular-nums">
+            {tr(value)}
+          </div>
+          {sub && <div className="mt-3 text-xs leading-relaxed text-p-muted">{tr(sub)}</div>}
         </div>
-        {icon && <div className="text-2xl">{icon}</div>}
+        {icon && (
+          <div
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${accents[tone]}`}
+          >
+            <DisplayIcon value={icon} size={18} />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -47,7 +54,7 @@ export function StatCard({
 export function StatGrid({ children }: { children: ReactNode }) {
   useLanguage();
   return (
-    <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(230px,1fr))]">
+    <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr))]">
       {children}
     </div>
   );

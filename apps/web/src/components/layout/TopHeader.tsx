@@ -18,16 +18,18 @@ export function TopHeader({
   useLanguage();
   const clock = useClock();
   return (
-    <header className="mb-6 flex flex-wrap items-start justify-between gap-4 rounded-card border border-p-border bg-white px-5 py-4 shadow-sm">
-      <div>
-        <h1 className="text-2xl font-bold text-p-dark">{tr(title)}</h1>
-        {subtitle && <p className="text-sm text-p-muted">{tr(subtitle)}</p>}
+    <header className="page-header mb-8 flex flex-wrap items-center justify-between gap-5">
+      <div className="min-w-0">
+        <h1 className="text-3xl font-semibold tracking-tight text-p-dark">
+          {tr(typeof title === 'string' ? title.replace(/^[^\p{L}\p{N}]+/u, '') : title)}
+        </h1>
+        {subtitle && <p className="mt-2 text-sm leading-relaxed text-p-muted">{tr(subtitle)}</p>}
       </div>
       <div className="flex items-center gap-4">
         {actions}
         <div className="text-right">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-p-primary font-bold text-white">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-p-border bg-white font-semibold text-p-primary">
               {name.charAt(0).toUpperCase()}
             </div>
             <div>

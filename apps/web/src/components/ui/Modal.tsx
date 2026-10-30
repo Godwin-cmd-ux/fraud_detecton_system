@@ -1,5 +1,5 @@
 import { useLanguage, translate as tr } from '../../i18n';
-import { useEffect } from 'react';
+import { useEffect, useId } from 'react';
 import type { ReactNode } from 'react';
 
 export interface ModalProps {
@@ -14,6 +14,7 @@ export interface ModalProps {
 /** Accessible dialog: Escape and backdrop click close it. */
 export function Modal({ open, onClose, title, children, footer, size = 'md' }: ModalProps) {
   useLanguage();
+  const titleId = useId();
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -33,10 +34,15 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: M
       <div
         role="dialog"
         aria-modal="true"
-        className={`w-full ${width} animate-slide-down rounded-xl bg-white p-6 shadow-2xl`}
+        aria-labelledby={title ? titleId : undefined}
+        className={`max-h-[90dvh] w-full overflow-y-auto ${width} animate-slide-down rounded-xl bg-white p-6 shadow-2xl`}
         onMouseDown={(e) => e.stopPropagation()}
       >
-        {title && <h2 className="mb-4 text-lg font-bold text-p-dark">{tr(title)}</h2>}
+        {title && (
+          <h2 id={titleId} className="mb-4 text-lg font-bold text-p-dark">
+            {tr(title)}
+          </h2>
+        )}
         <div className="text-sm text-p-text">{children}</div>
         {footer && <div className="mt-6 flex flex-wrap justify-end gap-2">{footer}</div>}
       </div>

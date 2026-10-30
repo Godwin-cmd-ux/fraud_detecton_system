@@ -52,7 +52,11 @@ export function Login() {
       title={tr('Sign in')}
       subtitle={tr('Secure access to your wallet and fraud monitoring.')}
     >
-      <div role="group" aria-label={tr('Account type')} className="mb-5 flex gap-3">
+      <div
+        role="group"
+        aria-label={tr('Account type')}
+        className="account-tabs mb-6 grid grid-cols-2 gap-1 rounded-lg border border-s-line p-1"
+      >
         {(['user', 'admin'] as const).map((value) => (
           <button
             key={value}

@@ -11,7 +11,7 @@ export function UserLayout() {
   const name = me.data?.name ?? 'Customer';
   return (
     <SidebarShell
-      brand="🛡️ FraudDetect"
+      brand="Sentinel"
       subtitle={tr('Customer Portal')}
       profile={{ initial: name.charAt(0).toUpperCase(), name, role: 'Customer' }}
       items={[
@@ -31,7 +31,7 @@ export function UserLayout() {
       footer={
         <>
           <div>{tr('Fraud Detection System v2.0')}</div>
-          <div>{tr('🤖 AI-Powered Fraud Detection')}</div>
+          <div>{tr('Transaction screening')}</div>
         </>
       }
     />

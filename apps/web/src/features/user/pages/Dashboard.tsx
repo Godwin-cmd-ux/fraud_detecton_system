@@ -1,3 +1,4 @@
+import { Eye, EyeOff, ArrowUpRight, ArrowDownToLine, ArrowLeftRight } from 'lucide-react';
 import { useLanguage, translate as tr } from '../../../i18n';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
@@ -78,7 +79,7 @@ export function UserDashboardPage() {
         </Alert>
       )}
 
-      <div className="mb-6 rounded-card border border-p-border bg-gradient-to-r from-p-primary to-p-primary-dark p-6 text-white shadow-sm">
+      <div className="balance-card mb-6 rounded-card p-7 text-white sm:p-8">
         <div className="text-xs font-semibold tracking-wide uppercase opacity-80">
           {tr('Available Balance')}
         </div>
@@ -89,7 +90,13 @@ export function UserDashboardPage() {
           className="mt-2 flex items-center gap-3 text-left text-3xl font-bold tracking-wide"
         >
           <span>{revealed ? formatTsh(d.balance ?? 0) : MASK}</span>
-          <span className="text-xl">{tr(revealed ? '🔓' : '🔒')}</span>
+          <span className="opacity-60">
+            {revealed ? (
+              <EyeOff size={20} aria-hidden="true" />
+            ) : (
+              <Eye size={20} aria-hidden="true" />
+            )}
+          </span>
         </button>
         <div className="mt-2 text-xs opacity-80">
           {tr(
@@ -125,14 +132,17 @@ export function UserDashboardPage() {
       </StatGrid>
 
       <div className="my-6 flex flex-wrap gap-3">
-        <Link to="/app/send">
-          <Button>{tr('💸 Send Money')}</Button>
+        <Link to="/app/send" className="quick-action quick-action-primary">
+          <ArrowUpRight size={17} aria-hidden="true" />
+          {tr('Send Money')}
         </Link>
-        <Link to="/app/withdraw">
-          <Button variant="success">{tr('🏧 Withdraw')}</Button>
+        <Link to="/app/withdraw" className="quick-action">
+          <ArrowDownToLine size={17} aria-hidden="true" />
+          {tr('Withdraw')}
         </Link>
-        <Link to="/app/transactions">
-          <Button variant="secondary">{tr('📜 View Transactions')}</Button>
+        <Link to="/app/transactions" className="quick-action">
+          <ArrowLeftRight size={17} aria-hidden="true" />
+          {tr('View Transactions')}
         </Link>
       </div>
 

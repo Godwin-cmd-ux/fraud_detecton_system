@@ -5,6 +5,7 @@ import { Link } from 'react-router';
 import { ApiError, api } from '../../../api/client';
 import { LanguageSwitcher } from '../../../i18n/LanguageSwitcher';
 import { localizeValidity } from '../../../i18n/validation';
+import { ShieldCheck, ArrowLeft, ArrowUpRight, Fingerprint } from 'lucide-react';
 
 export const authInputClass =
   'w-full rounded-lg border border-s-line bg-s-bg px-3 py-3 text-s-text focus:outline-none focus:ring-2 focus:ring-s-teal';
@@ -22,17 +23,50 @@ export function AuthForm({
 }) {
   useLanguage();
   return (
-    <main className="min-h-screen bg-s-bg px-4 py-10 text-s-text">
-      <div className="mx-auto max-w-lg rounded-2xl border border-s-line bg-s-panel p-6 sm:p-9">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Link to="/" className="font-display text-lg font-bold text-s-teal">
-            Sentinel
+    <main className="auth-page theme-sentinel min-h-screen text-s-text">
+      <aside className="auth-story hidden lg:flex">
+        <Link to="/" className="flex items-center gap-3 text-xl font-semibold">
+          <ShieldCheck size={28} />
+          Sentinel
+          <span className="ml-1 text-xs font-normal text-white/50">
+            / {tr('Fraud Detection System')}
+          </span>
+        </Link>
+        <div className="my-auto py-16">
+          <div className="auth-emblem mb-10">
+            <Fingerprint size={72} strokeWidth={1} />
+          </div>
+          <p className="mb-5 text-xs font-medium tracking-[.18em] uppercase text-s-teal">
+            {tr('Built around your wallet')}
+          </p>
+          <h2 className="max-w-md text-5xl leading-[1.12] font-medium tracking-tight">
+            {tr('A clearer view of every transaction.')}
+          </h2>
+          <p className="mt-6 max-w-sm text-base leading-relaxed text-white/60">
+            {tr('Secure access to your wallet and fraud monitoring.')}
+          </p>
+        </div>
+        <div className="flex items-center justify-between border-t border-white/15 pt-6 text-xs text-white/50">
+          <span>{tr('Sentinel · Fraud Detection System')}</span>
+          <ArrowUpRight size={16} aria-hidden="true" />
+        </div>
+      </aside>
+      <div className="auth-content px-5 py-8 sm:px-10">
+        <div className="auth-topbar mx-auto flex w-full max-w-lg items-center justify-between gap-4">
+          <Link to="/" className="inline-flex items-center gap-2 text-sm text-s-dim">
+            <ArrowLeft size={16} aria-hidden="true" />
+            {tr('Sentinel')}
           </Link>
           <LanguageSwitcher dark />
         </div>
-        <h1 className="mt-6 font-display text-3xl font-bold">{tr(title)}</h1>
-        {subtitle && <p className="mt-2 text-s-dim">{tr(subtitle)}</p>}
-        <div className="mt-6">{children}</div>
+        <div className="auth-form mx-auto w-full max-w-lg py-12 sm:py-16">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <ShieldCheck size={32} className="text-s-teal" aria-hidden="true" />
+          </div>
+          <h1 className="mt-6 font-display text-4xl font-medium tracking-tight">{tr(title)}</h1>
+          {subtitle && <p className="mt-3 leading-relaxed text-s-dim">{tr(subtitle)}</p>}
+          <div className="mt-8">{children}</div>
+        </div>
       </div>
     </main>
   );
