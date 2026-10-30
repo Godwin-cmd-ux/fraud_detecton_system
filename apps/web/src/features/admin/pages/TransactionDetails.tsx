@@ -1,12 +1,53 @@
 import { useLanguage, translate as tr } from '../../../i18n';
+import { useState } from 'react';
 import { Link, useParams } from 'react-router';
+import { Download } from 'lucide-react';
 import { useAdminTransaction } from '../../../api/admin';
+import { useMe } from '../../../api/auth';
+import type { AdminTxDetails } from '../../../api/types';
+import { Button } from '../../../components/ui/Button';
 import { Alert } from '../../../components/ui/Alert';
 import { RiskBadge, StatusBadge } from '../../../components/ui/Badge';
 import { Spinner } from '../../../components/ui/Spinner';
 import { Card, EmptyState } from '../../../components/ui/Table';
 import { formatDate, formatTsh, riskColor } from '../../../lib/format';
+import { downloadAdminRecord } from '../../../lib/receipt';
 import { MonitoringHeader } from '../components/Monitoring';
+
+/** Saves the administrator copy of this transaction as a PDF, naming who generated it. */
+function AdminRecordButton({ tx }: { tx: AdminTxDetails }) {
+  useLanguage();
+  const me = useMe();
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  async function download() {
+    setBusy(true);
+    setFailed(false);
+    try {
+      const principal = me.data ?? (await me.refetch()).data;
+      await downloadAdminRecord(tx, principal?.name ?? tr('Administrator'));
+    } catch {
+      setFailed(true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <span className="inline-flex flex-col items-end gap-1.5">
+      <Button variant="secondary" onClick={download} loading={busy}>
+        {!busy && <Download size={15} aria-hidden="true" />}
+        {tr(busy ? 'Preparing…' : 'Download record')}
+      </Button>
+      {failed && (
+        <span role="alert" className="text-xs text-p-danger">
+          {tr('Could not create the receipt. Please try again.')}
+        </span>
+      )}
+    </span>
+  );
+}
 
 export function TransactionDetailsPage() {
   useLanguage();
@@ -17,9 +58,12 @@ export function TransactionDetailsPage() {
   return (
     <div className="space-y-5">
       <MonitoringHeader title={tr('Transaction Details')} />
-      <Link to="/admin/transactions" className="text-p-primary">
-        {tr('← Back to Transactions')}
-      </Link>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link to="/admin/transactions" className="card-link">
+          {tr('← Back to Transactions')}
+        </Link>
+        {tx && <AdminRecordButton tx={tx} />}
+      </div>
       {!validId && <Alert kind="error">{tr('Invalid transaction ID.')}</Alert>}
       {validId && query.isPending && <Spinner />}
       {query.isError && <Alert kind="error">{tr('Could not load transaction details.')}</Alert>}

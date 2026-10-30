@@ -2,7 +2,14 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { jsPDF } from 'jspdf';
 import type { TransactionListItem } from '@fraud/shared';
 import { setLanguage } from '../i18n';
-import { buildReceipt, receiptFileName, securityCheck } from './receipt';
+import type { AdminTxDetails } from '../api/types';
+import {
+  adminRecordFileName,
+  buildAdminRecord,
+  buildReceipt,
+  receiptFileName,
+  securityCheck,
+} from './receipt';
 
 const tx = (patch: Partial<TransactionListItem> = {}): TransactionListItem => ({
   id: 1,
@@ -69,5 +76,64 @@ describe('transaction receipt', () => {
 
   it('names the file after the transaction', () => {
     expect(receiptFileName(tx())).toBe('sentinel-receipt-TXN20261030ABC.pdf');
+  });
+
+  it('builds the administrator copy with both parties and the risk assessment', () => {
+    const party = (id: number, fullName: string, email: string) => ({
+      id,
+      fullName,
+      email,
+      phone: '+255700000000',
+      balance: 0,
+    });
+    const tx: AdminTxDetails = {
+      id: 7,
+      transactionId: 'TXN20261030XYZ',
+      senderId: 1,
+      senderName: 'Juma Ally',
+      receiverId: 2,
+      receiverName: 'Rehema Said',
+      amount: 2_500_000,
+      type: 'transfer',
+      status: 'ABORTED',
+      fraudScore: 86,
+      fraudPrediction: 'FRAUD',
+      riskLevel: 'HIGH',
+      location: 'Mwanza',
+      createdAt: '2026-10-30T09:15:00Z',
+      reviewedAt: null,
+      message: 'BLOCKED: Large amount at an unusual hour | rent',
+      modelVersion: '1.0.0',
+      predictionTime: null,
+      featureData: null,
+      ipAddress: null,
+      userAgent: null,
+      sender: party(1, 'Juma Ally', 'juma@example.com'),
+      receiver: party(2, 'Rehema Said', 'rehema@example.com'),
+      admin: null,
+      reviewedBy: null,
+    };
+    const out = buildAdminRecord(jsPDF, tx, 'Godwin Admin').output();
+    for (const text of [
+      'administrator copy',
+      'Juma Ally · juma@example.com',
+      'Rehema Said · rehema@example.com',
+      '86.0% · HIGH · FRAUD',
+      'BLOCKED: Large amount at an unusual hour | rent',
+      'by Godwin Admin',
+      'The transaction was stopped and no money moved.',
+    ]) {
+      expect(out).toContain(text);
+    }
+    expect(securityCheck({ ...tx, status: 'SUCCESS', fraudScore: 55 }, 'admin').body).toBe(
+      'This transaction still needs an administrator review.',
+    );
+    expect(
+      securityCheck(
+        { ...tx, status: 'SUCCESS', fraudScore: 55, reviewedAt: '2026-10-30T10:00:00Z' },
+        'admin',
+      ).body,
+    ).toBe('An administrator has reviewed this transaction.');
+    expect(adminRecordFileName(tx)).toBe('sentinel-record-TXN20261030XYZ.pdf');
   });
 });

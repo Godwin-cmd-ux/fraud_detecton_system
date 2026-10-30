@@ -53,6 +53,19 @@ export const sw: Record<string, string> = {
   Flagged: 'Umewekewa alama',
   Scanning: 'Unachunguzwa',
   'Rule checks': 'Ukaguzi wa kanuni',
+  'Download record': 'Pakua kumbukumbu',
+  'Transaction record · administrator copy': 'Kumbukumbu ya muamala · nakala ya msimamizi',
+  From: 'Kutoka',
+  To: 'Kwenda',
+  'Risk assessment': 'Tathmini ya hatari',
+  'Model version': 'Toleo la modeli',
+  'The transaction was stopped and no money moved.':
+    'Muamala ulisimamishwa na hakuna pesa iliyohamishwa.',
+  'An administrator has reviewed this transaction.': 'Msimamizi ameukagua muamala huu.',
+  'This transaction still needs an administrator review.':
+    'Muamala huu bado unahitaji kukaguliwa na msimamizi.',
+  'Internal record with personal data. Share only with authorised staff.':
+    'Kumbukumbu ya ndani yenye taarifa binafsi. Shiriki na wafanyakazi walioidhinishwa tu.',
   'Transaction receipt': 'Risiti ya muamala',
   'Download receipt': 'Pakua risiti',
   'Preparing…': 'Inaandaa…',
