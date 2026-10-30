@@ -46,21 +46,23 @@ export function SecurityQuestionsFields({
           />
         </span>
       </div>
-      {questions.map(({ key, text }) => {
-        const answered = Boolean(answers[key]?.trim());
-        return (
-          <div key={key} className={`question-field ${answered ? 'is-answered' : ''}`}>
-            <AuthField
-              name={`answer-${key}`}
-              label={tr(text)}
-              autoComplete="off"
-              icon={answered ? <Check size={16} /> : <KeyRound size={16} />}
-              value={answers[key] ?? ''}
-              onChange={(e) => onChange({ ...answers, [key]: e.target.value })}
-            />
-          </div>
-        );
-      })}
+      <div className="grid gap-4 sm:grid-cols-2 sm:items-end">
+        {questions.map(({ key, text }) => {
+          const answered = Boolean(answers[key]?.trim());
+          return (
+            <div key={key} className={`question-field ${answered ? 'is-answered' : ''}`}>
+              <AuthField
+                name={`answer-${key}`}
+                label={tr(text)}
+                autoComplete="off"
+                icon={answered ? <Check size={16} /> : <KeyRound size={16} />}
+                value={answers[key] ?? ''}
+                onChange={(e) => onChange({ ...answers, [key]: e.target.value })}
+              />
+            </div>
+          );
+        })}
+      </div>
     </fieldset>
   );
 }

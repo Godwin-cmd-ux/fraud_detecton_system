@@ -44,14 +44,14 @@ function CardPreview({ name, number }: { name: string; number: string }) {
         <Wifi size={18} className="rotate-90 opacity-60" />
       </div>
       <span className="card-preview__chip" />
-      <div className="tabular font-mono text-[1.05rem] tracking-[0.14em] sm:text-lg">
+      <div className="tabular font-mono text-[15px] tracking-[0.12em]">
         {groups.map((group, index) => (
-          <span key={index} className="mr-3 inline-block last:mr-0">
+          <span key={index} className="mr-2.5 inline-block last:mr-0">
             {group}
           </span>
         ))}
       </div>
-      <div className="mt-4 flex items-end justify-between gap-3">
+      <div className="flex items-end justify-between gap-3">
         <div className="min-w-0">
           <div className="text-[9px] tracking-[0.16em] uppercase opacity-55">
             {tr('Card holder')}
@@ -74,10 +74,10 @@ function RegisterAside({ name, number }: { name: string; number: string }) {
     ['Start sending money', 'Sign in to send, withdraw and track activity.'],
   ];
   return (
-    <div className="my-auto py-12">
+    <div className="reg-aside mt-12 mb-auto">
       <CardPreview name={name} number={number} />
-      <p className="eyebrow mt-12 mb-6 flex">{tr('Open your wallet in three steps')}</p>
-      <ol className="space-y-5">
+      <p className="eyebrow mt-10 mb-5 flex">{tr('Open your wallet in three steps')}</p>
+      <ol className="space-y-4">
         {steps.map(([title, body], index) => (
           <li key={title} className="flex gap-4">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-s-teal/30 font-mono text-xs text-s-teal">
@@ -85,7 +85,7 @@ function RegisterAside({ name, number }: { name: string; number: string }) {
             </span>
             <span>
               <span className="block font-medium">{tr(title)}</span>
-              <span className="mt-0.5 block text-sm text-white/55">{tr(body)}</span>
+              <span className="reg-aside__body mt-0.5 block text-sm text-white/55">{tr(body)}</span>
             </span>
           </li>
         ))}
@@ -222,7 +222,7 @@ export function Register() {
           </ol>
           <AuthError message={error || questionError} />
           <form onSubmit={submit} className="space-y-4">
-            <fieldset disabled={busy || confirm} className="space-y-8">
+            <fieldset disabled={busy || confirm} className="space-y-7">
               <Section index={1} title="Your details" done={detailsDone}>
                 <AuthField
                   name="fullName"
@@ -286,30 +286,32 @@ export function Register() {
               </Section>
 
               <Section index={2} title="Sign-in security" done={securityDone}>
-                <AuthField
-                  name="password"
-                  label={tr('Password')}
-                  type="password"
-                  autoComplete="new-password"
-                  icon={<Lock size={16} />}
-                  revealable
-                  minLength={6}
-                  value={form.password}
-                  onChange={(e) => change('password', e.target.value)}
-                  required
-                />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <AuthField
+                    name="password"
+                    label={tr('Password')}
+                    type="password"
+                    autoComplete="new-password"
+                    icon={<Lock size={16} />}
+                    revealable
+                    minLength={6}
+                    value={form.password}
+                    onChange={(e) => change('password', e.target.value)}
+                    required
+                  />
+                  <AuthField
+                    name="confirmPassword"
+                    label={tr('Confirm password')}
+                    type="password"
+                    autoComplete="new-password"
+                    icon={<Lock size={16} />}
+                    revealable
+                    value={form.confirmPassword}
+                    onChange={(e) => change('confirmPassword', e.target.value)}
+                    required
+                  />
+                </div>
                 <PasswordStrength password={form.password} />
-                <AuthField
-                  name="confirmPassword"
-                  label={tr('Confirm password')}
-                  type="password"
-                  autoComplete="new-password"
-                  icon={<Lock size={16} />}
-                  revealable
-                  value={form.confirmPassword}
-                  onChange={(e) => change('confirmPassword', e.target.value)}
-                  required
-                />
                 {form.confirmPassword && (
                   <p
                     role="status"

@@ -53,7 +53,7 @@ export function AuthForm({
             </p>
           </div>
         )}
-        <div className="flex items-center justify-between border-t border-white/15 pt-6 text-xs text-white/50">
+        <div className="auth-story__foot flex items-center justify-between border-t border-white/15 pt-6 text-xs text-white/50">
           <span>{tr('Sentinel · Fraud Detection System')}</span>
           <ArrowUpRight size={16} aria-hidden="true" />
         </div>
@@ -73,7 +73,7 @@ export function AuthForm({
           </Link>
           <LanguageSwitcher dark />
         </div>
-        <div className="auth-form mx-auto w-full max-w-lg py-12 sm:py-16">
+        <div className="auth-form mx-auto w-full max-w-lg py-10 sm:py-12">
           <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-s-teal/10 text-s-teal">
             <ShieldCheck size={22} aria-hidden="true" />
           </span>
