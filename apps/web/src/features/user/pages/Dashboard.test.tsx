@@ -51,15 +51,15 @@ describe('UserDashboardPage', () => {
     show();
     expect(await screen.findByText('••••••••••••••••')).toBeInTheDocument();
     expect(screen.getByText('Click the balance amount to reveal')).toBeInTheDocument();
-    expect(screen.getByText('⚠️ Suspicious Activity')).toBeInTheDocument();
-    expect(screen.getByText('📤 Sent to Baraka Mushi')).toBeInTheDocument();
+    expect(screen.getByText('Suspicious Activity')).toBeInTheDocument();
+    expect(screen.getByText('Sent to Baraka Mushi')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /reveal balance/i }));
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'secret' } });
     fireEvent.click(screen.getByRole('button', { name: 'Verify' }));
 
     expect(await screen.findByText('TSh 1,234.50')).toBeInTheDocument();
-    expect(screen.getByText('👁️ Visible')).toBeInTheDocument();
+    expect(screen.getByText('Visible')).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 
@@ -76,6 +76,6 @@ describe('UserDashboardPage', () => {
     fireEvent.click(await screen.findByRole('button', { name: /reveal balance/i }));
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'nope' } });
     fireEvent.click(screen.getByRole('button', { name: 'Verify' }));
-    expect(await screen.findByText('❌ Incorrect password. Please try again.')).toBeInTheDocument();
+    expect(await screen.findByText('Incorrect password. Please try again.')).toBeInTheDocument();
   });
 });

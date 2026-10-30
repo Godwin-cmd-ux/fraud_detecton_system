@@ -15,34 +15,34 @@ export function AdminLayout() {
   const c = counters.data;
 
   const items: SidebarItem[] = [
-    { to: '/admin/dashboard', label: 'Dashboard', icon: '📊' },
+    { to: '/admin/dashboard', label: 'Dashboard', section: 'Overview' },
     {
       to: '/admin/users',
       label: 'Users',
-      icon: '👥',
+      section: 'People',
       end: true,
       badge: c ? { count: c.newUsers24h, tone: 'info' } : undefined,
     },
-    { to: '/admin/users/new', label: 'Create User', icon: '➕' },
+    { to: '/admin/users/new', label: 'Create User', section: 'People' },
     {
       to: '/admin/approvals',
       label: 'Approve Users',
-      icon: '✅',
+      section: 'People',
       badge: c ? { count: c.pendingUsers, tone: 'warning' } : undefined,
     },
     {
       to: '/admin/transactions',
       label: 'Transactions',
-      icon: '💸',
+      section: 'Money',
       end: true,
       badge: c ? { count: c.aborted24h, tone: 'warning' } : undefined,
     },
-    { to: '/admin/balance-adjustments', label: 'Balance Adjustments', icon: '💰' },
-    { to: '/admin/fraud-overview', label: 'Fraud Overview', icon: '📈' },
+    { to: '/admin/balance-adjustments', label: 'Balance Adjustments', section: 'Money' },
+    { to: '/admin/fraud-overview', label: 'Fraud Overview', section: 'Risk' },
     {
       to: '/admin/fraud-alerts',
       label: 'Fraud Alerts',
-      icon: '🚨',
+      section: 'Risk',
       badge: c ? { count: c.fraudAlerts, tone: 'fraud' } : undefined,
     },
   ];
@@ -50,7 +50,7 @@ export function AdminLayout() {
     items.push({
       to: '/admin/transactions?riskLevel=HIGH',
       label: 'High Risk',
-      icon: '🔴',
+      section: 'Risk',
       badge: { count: c.highRisk, tone: 'fraud' },
     });
   }
@@ -58,14 +58,14 @@ export function AdminLayout() {
     items.push({
       to: '/admin/transactions?fraud=pending',
       label: 'AI Review Queue',
-      icon: '🤖',
+      section: 'Risk',
       badge: { count: c.reviewQueue, tone: 'plain' },
     });
   }
   items.push({
     to: '/login',
     label: 'Logout',
-    icon: '🚪',
+    section: 'Account',
     onClick: () =>
       logout.mutate(undefined, { onSettled: () => navigate('/login', { replace: true }) }),
   });

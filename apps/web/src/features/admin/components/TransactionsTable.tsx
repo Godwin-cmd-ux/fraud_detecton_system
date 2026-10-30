@@ -91,7 +91,7 @@ export function TransactionsTable({
               <div className="flex flex-wrap gap-1.5">
                 <Link
                   to={`/admin/transactions/${r.id}`}
-                  className="rounded-md bg-p-primary px-2.5 py-1 text-xs font-semibold text-white"
+                  className="rounded-lg border border-p-border bg-white px-2.5 py-1 text-xs font-medium text-p-primary transition hover:border-p-primary/40 hover:bg-p-primary/5"
                 >
                   {tr('View')}
                 </Link>

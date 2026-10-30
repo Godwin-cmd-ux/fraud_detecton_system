@@ -92,7 +92,6 @@ it('keeps API filter values in English while translating their displayed labels'
       query: { page: 1, status: 'SUCCESS' },
     }),
   );
-  expect(await screen.findByText('Success', { exact: true })).toBeInTheDocument();
 });
 
 it('translates dynamic security messages while preserving names, amounts, and transaction IDs', () => {

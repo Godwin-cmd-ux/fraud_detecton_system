@@ -15,14 +15,14 @@ export function UserLayout() {
       subtitle={tr('Customer Portal')}
       profile={{ initial: name.charAt(0).toUpperCase(), name, role: 'Customer' }}
       items={[
-        { to: '/app/dashboard', label: 'Dashboard', icon: '📊' },
-        { to: '/app/send', label: 'Send Money', icon: '💸' },
-        { to: '/app/withdraw', label: 'Withdraw', icon: '🏧' },
-        { to: '/app/transactions', label: 'Transactions', icon: '📜' },
+        { to: '/app/dashboard', label: 'Dashboard', section: 'Wallet' },
+        { to: '/app/send', label: 'Send Money', section: 'Wallet' },
+        { to: '/app/withdraw', label: 'Withdraw', section: 'Wallet' },
+        { to: '/app/transactions', label: 'Transactions', section: 'Wallet' },
         {
           to: '/login',
           label: 'Logout',
-          icon: '🚪',
+          section: 'Account',
           onClick: () => {
             logout.mutate(undefined, { onSettled: () => navigate('/login', { replace: true }) });
           },

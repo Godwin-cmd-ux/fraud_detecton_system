@@ -13,7 +13,7 @@ export function Pagination({ page, totalPages, onChange }: PaginationProps) {
   for (let n = Math.max(1, current - 2); n <= Math.min(totalPages, current + 2); n++) pages.add(n);
   const sorted = [...pages].sort((a, b) => a - b);
   return (
-    <nav aria-label={tr('Pagination')} className="flex flex-wrap items-center gap-2">
+    <nav aria-label={tr('Pagination')} className="pagination flex flex-wrap items-center gap-1.5">
       <button type="button" disabled={current === 1} onClick={() => onChange(current - 1)}>
         {tr('Previous')}
       </button>

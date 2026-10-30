@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { FRAUD } from '@fraud/shared';
 import type { Location, WithdrawalResult } from '@fraud/shared';
-import { useMe } from '../../../api/auth';
 import { useWithdraw, useWithdrawContext } from '../../../api/me';
 import { TopHeader } from '../../../components/layout/TopHeader';
 import { Alert } from '../../../components/ui/Alert';
@@ -20,7 +19,6 @@ const LOCKED_REASON = 'You have exceeded the number of failed withdrawal attempt
 
 export function WithdrawPage() {
   useLanguage();
-  const me = useMe();
   const context = useWithdrawContext();
   const withdraw = useWithdraw();
   const [location, setLocation] = useState<Location | ''>('');
@@ -35,7 +33,6 @@ export function WithdrawPage() {
   }, [context.data, location]);
 
   const ctx = context.data;
-  const name = me.data?.name ?? 'Customer';
   const value = Number(amount);
 
   function onSubmit(e: FormEvent) {
@@ -69,29 +66,24 @@ export function WithdrawPage() {
   const lockedOut = ctx?.blocked && !blocked;
   const confirmBody =
     ctx && ctx.failedAttempts >= 2
-      ? `⚠️ You have ${ctx.failedAttempts} previous failed attempts. One more failed attempt will block your withdrawals.\n\nYou are about to withdraw ${formatTsh(value)}. Continue?`
+      ? `You have ${ctx.failedAttempts} previous failed attempts. One more failed attempt will block your withdrawals.\n\nYou are about to withdraw ${formatTsh(value)}. Continue?`
       : `You are about to withdraw ${formatTsh(value)}. Continue?`;
 
   return (
     <div>
-      <TopHeader
-        title={tr('Withdraw')}
-        subtitle={tr('Withdraw funds from your account')}
-        name={name}
-        hint={tr('Making a withdrawal')}
-      />
+      <TopHeader title={tr('Withdraw')} subtitle={tr('Withdraw funds from your account')} />
 
       <div className="mx-auto max-w-2xl rounded-card border border-p-border bg-white p-6 shadow-sm">
         {blocked && (
           <BlockedPanel
-            title={tr('🚫 WITHDRAWAL BLOCKED')}
+            title={tr('WITHDRAWAL BLOCKED')}
             reason="This withdrawal was blocked by our fraud detection system."
             details={blocked.message}
           />
         )}
         {lockedOut && (
           <BlockedPanel
-            title={tr('🚫 WITHDRAWALS BLOCKED')}
+            title={tr('WITHDRAWALS BLOCKED')}
             reason={LOCKED_REASON}
             details={`You have ${ctx.failedAttempts} consecutive failed withdrawal attempts. Withdrawals are temporarily blocked. Please contact support to unblock your account.`}
           />

@@ -69,8 +69,8 @@ export const messages: Record<string, string> = {
     'Una majaribio {0} ya kutoa pesa yaliyoshindikana mfululizo. Utoaji pesa umezuiwa kwa muda. Tafadhali wasiliana na huduma kwa wateja ili kufungua akaunti yako.',
   'Your account is locked. Please wait {0} minute(s) before trying again.':
     'Akaunti yako imefungwa. Tafadhali subiri dakika {0} kabla ya kujaribu tena.',
-  '{0} Received from {1}': '{0} Imepokelewa kutoka kwa {1}',
-  '{0} Sent to {1}': '{0} Imetumwa kwa {1}',
+  'Received from {0}': 'Imepokelewa kutoka kwa {0}',
+  'Sent to {0}': 'Imetumwa kwa {0}',
   '{0} analyzed · avg {1}% · Highest: {2}%': '{0} imechambuliwa · wastani {1}% · Juu zaidi: {2}%',
   '{0}% of total': '{0}% ya jumla',
   'Range: {0}% – {1}%': 'Wigo: {0}% – {1}%',

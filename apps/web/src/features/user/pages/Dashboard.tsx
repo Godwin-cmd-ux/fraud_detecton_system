@@ -14,7 +14,7 @@ import { Spinner } from '../../../components/ui/Spinner';
 import { StatCard, StatGrid } from '../../../components/ui/StatCard';
 import { Card, EmptyState, Table, Td, Th } from '../../../components/ui/Table';
 import { formatDate, formatTsh } from '../../../lib/format';
-import { describeTransaction } from '../components/TransactionDetailsModal';
+import { TransactionLabel } from '../components/TransactionDetailsModal';
 
 const MASK = '••••••••••••••••';
 
@@ -52,7 +52,7 @@ export function UserDashboardPage() {
           setAskPassword(false);
           setHidden(false);
         } else {
-          setError('❌ Incorrect password. Please try again.');
+          setError('Incorrect password. Please try again.');
         }
       },
       onError: (err) => setError(err.message),
@@ -61,101 +61,118 @@ export function UserDashboardPage() {
 
   return (
     <div>
-      <TopHeader
-        title={tr('Dashboard')}
-        subtitle={tr(`Welcome back, ${d.user.fullName}!`)}
-        name={d.user.fullName}
-        hint={tr('Customer account')}
-      />
+      <TopHeader title={tr('Dashboard')} subtitle={tr(`Welcome back, ${d.user.fullName}!`)} />
 
       {d.fraud.fraud > 0 && (
         <Alert kind="warning" className="mb-6">
-          <strong>{tr('🚨 Security alert:')}</strong> {d.fraud.fraud}
+          <strong>{tr('Security alert:')}</strong> {d.fraud.fraud}
           {tr(' of your transactions were flagged as suspicious.')}
           {tr(' ')}
-          <Link to="/app/transactions?fraud=fraud" className="font-semibold underline">
+          <Link
+            to="/app/transactions?fraud=fraud"
+            className="font-semibold text-warn underline underline-offset-2"
+          >
             {tr('Review them')}
           </Link>
         </Alert>
       )}
 
-      <div className="balance-card mb-6 rounded-card p-7 text-white sm:p-8">
-        <div className="text-xs font-semibold tracking-wide uppercase opacity-80">
-          {tr('Available Balance')}
-        </div>
-        <button
-          type="button"
-          onClick={onBalanceClick}
-          aria-label={tr(revealed ? 'Hide balance' : 'Reveal balance')}
-          className="mt-2 flex items-center gap-3 text-left text-3xl font-bold tracking-wide"
-        >
-          <span>{revealed ? formatTsh(d.balance ?? 0) : MASK}</span>
-          <span className="opacity-60">
-            {revealed ? (
-              <EyeOff size={20} aria-hidden="true" />
-            ) : (
-              <Eye size={20} aria-hidden="true" />
+      <div className="balance-card mb-6 grid gap-7 rounded-card p-6 text-white sm:p-8 lg:grid-cols-[1fr_auto] lg:items-end">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-xs font-medium tracking-[0.12em] text-white/65 uppercase">
+              {tr('Available Balance')}
+            </span>
+            <span className="tabular rounded-md border border-white/12 px-2 py-0.5 font-mono text-[11px] text-white/60">
+              •••• {d.user.cardLast4}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={onBalanceClick}
+            aria-label={tr(revealed ? 'Hide balance' : 'Reveal balance')}
+            className="balance-amount group mt-3 flex items-center gap-3 text-left text-[2.1rem] leading-tight font-semibold tracking-tight"
+          >
+            <span key={revealed ? 'shown' : 'masked'}>
+              {revealed ? formatTsh(d.balance ?? 0) : MASK}
+            </span>
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/8 text-white/70 transition group-hover:bg-white/15 group-hover:text-white">
+              {revealed ? (
+                <EyeOff size={16} aria-hidden="true" />
+              ) : (
+                <Eye size={16} aria-hidden="true" />
+              )}
+            </span>
+          </button>
+          <div className="mt-2 text-xs text-white/55">
+            {tr(
+              revealed
+                ? 'Visible'
+                : d.balance === 0
+                  ? 'Your balance is empty'
+                  : 'Click the balance amount to reveal',
             )}
-          </span>
-        </button>
-        <div className="mt-2 text-xs opacity-80">
-          {tr(
-            revealed
-              ? '👁️ Visible'
-              : d.balance === 0
-                ? 'Your balance is empty'
-                : 'Click the balance amount to reveal',
-          )}
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2.5">
+          <Link
+            to="/app/send"
+            className="inline-flex min-h-11 items-center gap-2 rounded-[10px] bg-s-teal px-4 text-sm font-medium text-s-bg transition hover:bg-[#c6e8d0] active:scale-[0.98]"
+          >
+            <ArrowUpRight size={17} aria-hidden="true" />
+            {tr('Send Money')}
+          </Link>
+          <Link
+            to="/app/withdraw"
+            className="inline-flex min-h-11 items-center gap-2 rounded-[10px] border border-white/15 px-4 text-sm font-medium text-white transition hover:border-white/30 hover:bg-white/5 active:scale-[0.98]"
+          >
+            <ArrowDownToLine size={17} aria-hidden="true" />
+            {tr('Withdraw')}
+          </Link>
+          <Link
+            to="/app/transactions"
+            className="inline-flex min-h-11 items-center gap-2 rounded-[10px] border border-white/15 px-4 text-sm font-medium text-white transition hover:border-white/30 hover:bg-white/5 active:scale-[0.98]"
+          >
+            <ArrowLeftRight size={17} aria-hidden="true" />
+            {tr('View Transactions')}
+          </Link>
         </div>
       </div>
 
       <StatGrid>
-        <StatCard label={tr('Total Transactions')} value={d.stats.total} icon="📊" />
-        <StatCard label={tr('Successful')} value={d.stats.successful} icon="✅" tone="green" />
-        <StatCard label={tr('Aborted')} value={d.stats.aborted} icon="❌" tone="red" />
+        <StatCard label={tr('Total Transactions')} value={d.stats.total} icon="activity" />
+        <StatCard label={tr('Successful')} value={d.stats.successful} icon="success" tone="green" />
+        <StatCard label={tr('Aborted')} value={d.stats.aborted} icon="failed" tone="red" />
         <StatCard
           label={tr('Success Rate')}
           value={`${d.stats.successRate}%`}
-          icon="📈"
+          icon="trend"
           tone="purple"
         />
         {d.fraud.analyzed > 0 && (
           <StatCard
             label={tr('Fraud Analysis')}
-            value={d.fraud.fraud > 0 ? '⚠️ Suspicious Activity' : '✅ Safe'}
+            value={d.fraud.fraud > 0 ? 'Suspicious Activity' : 'Safe'}
             sub={tr(
               `${d.fraud.analyzed} analyzed · avg ${d.fraud.avgScore.toFixed(1)}% · Highest: ${d.fraud.maxScore}%`,
             )}
+            icon="fraud"
             tone={d.fraud.fraud > 0 ? 'amber' : 'green'}
           />
         )}
       </StatGrid>
 
-      <div className="my-6 flex flex-wrap gap-3">
-        <Link to="/app/send" className="quick-action quick-action-primary">
-          <ArrowUpRight size={17} aria-hidden="true" />
-          {tr('Send Money')}
-        </Link>
-        <Link to="/app/withdraw" className="quick-action">
-          <ArrowDownToLine size={17} aria-hidden="true" />
-          {tr('Withdraw')}
-        </Link>
-        <Link to="/app/transactions" className="quick-action">
-          <ArrowLeftRight size={17} aria-hidden="true" />
-          {tr('View Transactions')}
-        </Link>
-      </div>
-
       <Card
+        className="mt-6"
         title={tr('Recent Transactions')}
         actions={
-          <Link to="/app/transactions" className="text-sm font-semibold text-p-primary">
+          <Link to="/app/transactions" className="card-link">
             {tr('View All →')}
           </Link>
         }
       >
         {d.recent.length === 0 ? (
-          <EmptyState icon="📭" title={tr('No transactions yet')} />
+          <EmptyState icon="inbox" title={tr('No transactions yet')} />
         ) : (
           <Table>
             <thead>
@@ -172,7 +189,9 @@ export function UserDashboardPage() {
               {d.recent.map((t) => (
                 <tr key={t.id}>
                   <Td className="font-mono text-xs">{t.transactionId}</Td>
-                  <Td>{tr(describeTransaction(t, 'dashboard'))}</Td>
+                  <Td>
+                    <TransactionLabel t={t} />
+                  </Td>
                   <Td className="font-semibold">{formatTsh(t.amount)}</Td>
                   <Td>
                     <StatusBadge status={t.status} />
@@ -193,7 +212,7 @@ export function UserDashboardPage() {
       <Modal
         open={askPassword}
         onClose={() => setAskPassword(false)}
-        title={tr('🔐 Verify your password')}
+        title={tr('Verify your password')}
         size="sm"
       >
         <form onSubmit={submitPassword} className="flex flex-col gap-3">

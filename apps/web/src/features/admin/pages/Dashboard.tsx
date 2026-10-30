@@ -22,57 +22,54 @@ export function AdminDashboardPage() {
 
   return (
     <div>
-      <TopHeader
-        title={tr('Dashboard Overview')}
-        subtitle={tr(`Welcome back, ${name}!`)}
-        name={name}
-        hint={tr('Administrator')}
-      />
+      <TopHeader title={tr('Dashboard Overview')} subtitle={tr(`Welcome back, ${name}!`)} />
 
       <StatGrid>
         <StatCard
           label={tr('Total Users')}
           value={kpis.totalUsers}
           sub={tr('Registered accounts')}
-          icon="👥"
+          icon="users"
         />
         <StatCard
           label={tr('Total Transactions')}
           value={kpis.totalTransactions}
           sub={tr('All time transactions')}
-          icon="💸"
+          icon="transfer"
           tone="purple"
         />
         <StatCard
           label={tr('Successful')}
           value={kpis.successful}
           sub={tr('Completed transactions')}
-          icon="✅"
+          icon="success"
           tone="green"
         />
         <StatCard
           label={tr('Aborted')}
           value={kpis.aborted}
           sub={tr('Suspicious transactions')}
-          icon="❌"
+          icon="failed"
           tone="red"
         />
         <StatCard
           label={tr('Total Money Moved')}
           value={formatTsh(kpis.moneyMoved)}
           sub={tr('Total volume processed')}
-          icon="💰"
+          icon="wallet"
           tone="amber"
         />
         <StatCard
-          label={tr('🚨 Fraud Detected')}
+          label={tr('Fraud Detected')}
+          icon="fraud"
           value={kpis.fraudDetected}
           sub={tr('Transactions flagged as fraud')}
           tone="red"
         />
         {kpis.highRisk > 0 && (
           <StatCard
-            label={tr('🔴 High Risk')}
+            label={tr('High Risk')}
+            icon="risk"
             value={kpis.highRisk}
             sub={tr('Immediate attention needed')}
             tone="red"
@@ -80,7 +77,8 @@ export function AdminDashboardPage() {
         )}
         {kpis.reviewQueue > 0 && (
           <StatCard
-            label={tr('🤖 AI Review Queue')}
+            label={tr('AI Review Queue')}
+            icon="queue"
             value={kpis.reviewQueue}
             sub={tr('Pending fraud analysis')}
             tone="gray"
@@ -91,9 +89,9 @@ export function AdminDashboardPage() {
       {recentAlerts.length > 0 && (
         <Card
           className="mt-6"
-          title={tr('🚨 Recent Fraud Alerts')}
+          title={tr('Recent Fraud Alerts')}
           actions={
-            <Link to="/admin/fraud-alerts" className="text-sm font-semibold text-p-primary">
+            <Link to="/admin/fraud-alerts" className="card-link">
               {tr('View All Alerts →')}
             </Link>
           }
@@ -106,7 +104,7 @@ export function AdminDashboardPage() {
         className="mt-6"
         title={tr('Recent Transactions')}
         actions={
-          <Link to="/admin/transactions" className="text-sm font-semibold text-p-primary">
+          <Link to="/admin/transactions" className="card-link">
             {tr('View All →')}
           </Link>
         }
@@ -122,7 +120,7 @@ export function AdminDashboardPage() {
         className="mt-6"
         title={tr('Recent Users')}
         actions={
-          <Link to="/admin/users" className="text-sm font-semibold text-p-primary">
+          <Link to="/admin/users" className="card-link">
             {tr('View All →')}
           </Link>
         }

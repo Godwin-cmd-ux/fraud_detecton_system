@@ -1,5 +1,6 @@
 import { useLanguage, translate as tr } from '../../../i18n';
 import { useState } from 'react';
+import { LockKeyhole } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { ApiError } from '../../../api/client';
 import { useUnlockTransactions } from '../../../api/me';
@@ -21,7 +22,7 @@ export function UnlockOverlay() {
       onError: (err) => {
         setError(
           err instanceof ApiError && err.status === 401
-            ? '❌ Incorrect password. Please try again.'
+            ? 'Incorrect password. Please try again.'
             : err.message,
         );
       },
@@ -33,8 +34,12 @@ export function UnlockOverlay() {
     <div className="relative min-h-[320px] overflow-hidden rounded-card border border-p-border bg-white">
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-p-bg to-white opacity-80 blur-sm" />
       <div className="relative mx-auto flex max-w-sm flex-col items-center gap-4 px-6 py-12 text-center">
-        <div className="text-4xl">🔒</div>
-        <h2 className="text-lg font-bold text-p-dark">{tr('Transactions Locked')}</h2>
+        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-p-primary/8 text-p-primary">
+          <LockKeyhole size={26} strokeWidth={1.75} aria-hidden="true" />
+        </span>
+        <h2 className="text-lg font-semibold tracking-tight text-p-dark">
+          {tr('Transactions Locked')}
+        </h2>
         <p className="text-sm text-p-muted">
           {tr(
             'Enter your password to view your transaction history. The list will automatically lock after 5 minutes of inactivity.',
@@ -51,7 +56,7 @@ export function UnlockOverlay() {
           />
           {error && <Alert kind="error">{tr(error)}</Alert>}
           <Button type="submit" loading={unlock.isPending}>
-            {tr('🔓 Unlock Transactions')}
+            {tr('Unlock Transactions')}
           </Button>
         </form>
       </div>

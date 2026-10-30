@@ -3,7 +3,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { createUserSchema } from '@fraud/shared';
 import { useCreateUser } from '../../../api/admin';
-import { useMe, useSecurityQuestions } from '../../../api/auth';
+import { useSecurityQuestions } from '../../../api/auth';
 import { TopHeader } from '../../../components/layout/TopHeader';
 import { Alert } from '../../../components/ui/Alert';
 import { Button } from '../../../components/ui/Button';
@@ -28,9 +28,9 @@ export function strengthOf(p: string): { score: number; label: string; color: st
   if (/[A-Z]/.test(p)) score++;
   if (/[0-9]/.test(p)) score++;
   if (/[$@#&!]/.test(p)) score++;
-  if (score <= 2) return { score, label: 'Weak', color: '#ef4444' };
-  if (score <= 4) return { score, label: 'Medium', color: '#f59e0b' };
-  return { score, label: 'Strong', color: '#10b981' };
+  if (score <= 2) return { score, label: 'Weak', color: '#b4383d' };
+  if (score <= 4) return { score, label: 'Medium', color: '#95600f' };
+  return { score, label: 'Strong', color: '#1d7550' };
 }
 
 const empty = {
@@ -45,7 +45,6 @@ const empty = {
 
 export function CreateUserPage() {
   useLanguage();
-  const me = useMe();
   const questions = useSecurityQuestions();
   const create = useCreateUser();
   const [form, setForm] = useState(empty);
@@ -92,16 +91,9 @@ export function CreateUserPage() {
     });
   }
 
-  const name = me.data?.name ?? 'Administrator';
-
   return (
     <div>
-      <TopHeader
-        title={tr('Create New User')}
-        subtitle={tr('Add a new customer to the system')}
-        name={name}
-        hint={tr('Administrator')}
-      />
+      <TopHeader title={tr('Create New User')} subtitle={tr('Add a new customer to the system')} />
       <Card title={tr('New customer account')} className="mx-auto max-w-3xl">
         {message && (
           <Alert kind="success" className="mb-4">
@@ -178,7 +170,7 @@ export function CreateUserPage() {
               checked={form.isApproved}
               onChange={(e) => set('isApproved', e.target.checked)}
             />
-            {tr('✅ Activate account immediately (skip approval)')}
+            {tr('Activate account immediately (skip approval)')}
           </label>
 
           <div className="md:col-span-2">

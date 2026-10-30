@@ -13,11 +13,11 @@ export function statusLabel(u: Pick<AdminUserRow, 'status'>): {
 } {
   switch (u.status) {
     case 'inactive':
-      return { text: '🔴 Inactive', sub: 'Deactivated', color: '#991b1b' };
+      return { text: 'Inactive', sub: 'Deactivated', color: '#b4383d' };
     case 'pending':
-      return { text: '⏳ Pending', sub: 'Awaiting Approval', color: '#92400e' };
+      return { text: 'Pending', sub: 'Awaiting Approval', color: '#95600f' };
     default:
-      return { text: '✅ Active', sub: 'Fully Active', color: '#065f46' };
+      return { text: 'Active', sub: 'Fully Active', color: '#1d7550' };
   }
 }
 
@@ -89,13 +89,13 @@ export function UserViewModal({
     <Modal
       open={user !== null}
       onClose={onClose}
-      title={tr('👁️ User Details')}
+      title={tr('User Details')}
       footer={
         user && (
           <>
             <UserActionButtons user={user} onAction={onAction} onDelete={onDelete} size="md" />
             <Link to={`/admin/users/${user.id}/balance`}>
-              <Button>{tr('💰 Add Balance')}</Button>
+              <Button>{tr('Add Balance')}</Button>
             </Link>
             <Button variant="secondary" onClick={onClose}>
               {tr('Close')}

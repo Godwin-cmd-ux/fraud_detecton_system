@@ -2,7 +2,6 @@ import { useLanguage, translate as tr } from '../../../i18n';
 import { useState } from 'react';
 import type { AdminUserRow } from '@fraud/shared';
 import { usePendingUsers, useRejectUser, useUserAction } from '../../../api/admin';
-import { useMe } from '../../../api/auth';
 import { TopHeader } from '../../../components/layout/TopHeader';
 import { Alert } from '../../../components/ui/Alert';
 import type { AlertKind } from '../../../components/ui/Alert';
@@ -17,7 +16,6 @@ type Pending = { kind: 'approve' | 'reject'; user: AdminUserRow } | null;
 
 export function ApprovalsPage() {
   useLanguage();
-  const me = useMe();
   const pendingUsers = usePendingUsers();
   const approve = useUserAction();
   const reject = useRejectUser();
@@ -37,28 +35,24 @@ export function ApprovalsPage() {
     else reject.mutate({ id: pending.user.id, reason }, { onSuccess: done, onError: fail });
     setPending(null);
   }
-
-  const name = me.data?.name ?? 'Administrator';
   const list = pendingUsers.data ?? [];
 
   return (
     <div>
       <TopHeader
-        title={tr('👥 User Approvals')}
+        title={tr('User Approvals')}
         subtitle={tr('Review and approve pending user registrations')}
-        name={name}
-        hint={tr('Administrator')}
       />
       {flash && (
         <Alert kind={flash.kind} className="mb-4">
           {tr(flash.text)}
         </Alert>
       )}
-      <Card title={tr(`⏳ Pending Approvals (${list.length})`)}>
+      <Card title={tr(`Pending Approvals (${list.length})`)}>
         {pendingUsers.isPending && <Spinner />}
         {pendingUsers.isError && <Alert kind="error">{tr('Could not load pending users.')}</Alert>}
         {pendingUsers.data && list.length === 0 && (
-          <EmptyState icon="✅" title={tr('No pending approvals')}>
+          <EmptyState icon="success" title={tr('No pending approvals')}>
             {tr('All users have been reviewed')}
           </EmptyState>
         )}
@@ -127,7 +121,7 @@ export function ApprovalsPage() {
         body={tr(
           pending ? (
             <span>
-              ⚠️ <strong>{tr('This action cannot be undone.')}</strong> {pending.user.fullName}
+              <strong>{tr('This action cannot be undone.')}</strong> {pending.user.fullName}
               {tr("'s registration will be deleted.")}
             </span>
           ) : (
@@ -144,7 +138,7 @@ export function ApprovalsPage() {
       <Modal
         open={viewing !== null}
         onClose={() => setViewing(null)}
-        title={tr('👁️ Registration details')}
+        title={tr('Registration details')}
         footer={
           <Button variant="secondary" onClick={() => setViewing(null)}>
             {tr('Close')}

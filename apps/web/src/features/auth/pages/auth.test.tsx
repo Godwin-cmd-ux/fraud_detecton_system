@@ -45,7 +45,7 @@ describe('Login', () => {
     mockedApi.mockRejectedValue(new ApiError(423, 'LOCKED', 'Account locked', { minutesRemaining: '0.0166666667' }));
     show(<Login />); fill('Email, Phone or Card Number', 'user@example.com'); fill('Password', 'password');
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
-    expect(await screen.findByRole('button', { name: '🔒 Account Locked - Please wait' })).toBeDisabled();
+    expect(await screen.findByRole('button', { name: 'Account Locked - Please wait' })).toBeDisabled();
     expect(screen.getByLabelText('Password')).toBeDisabled();
     vi.useFakeTimers();
     await act(async () => { vi.advanceTimersByTime(2500); });

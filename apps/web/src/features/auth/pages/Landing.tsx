@@ -1,173 +1,266 @@
 import { useLanguage, translate as tr } from '../../../i18n';
 import { Link } from 'react-router';
 import { formatTsh } from '../../../lib/format';
+import { useReveal } from '../../../lib/useReveal';
 import { LanguageSwitcher } from '../../../i18n/LanguageSwitcher';
-import { ShieldCheck, ArrowUpRight, Wallet, ScanLine, ListChecks } from 'lucide-react';
+import {
+  ShieldCheck,
+  ArrowUpRight,
+  Wallet,
+  ScanLine,
+  ListChecks,
+  Check,
+  TriangleAlert,
+  LoaderCircle,
+  MapPin,
+  Sparkles,
+} from 'lucide-react';
 
 interface Activity {
   id: number;
   amount: number;
-  status: string;
+  route: string;
+  status: 'Cleared' | 'Flagged' | 'Scanning';
   score?: number;
 }
+
+const activity: Activity[] = [
+  { id: 1, amount: 125_000, route: 'Dar es Salaam', status: 'Cleared', score: 12 },
+  { id: 2, amount: 2_500_000, route: 'Mwanza → Arusha', status: 'Flagged', score: 86 },
+  { id: 3, amount: 50_000, route: 'Dodoma', status: 'Scanning' },
+];
+
+/** Colour follows meaning: green clears, red flags, amber is still deciding. */
+const statusStyle = {
+  Cleared: { Icon: Check, color: '#1d7550', soft: '#e4f1e9' },
+  Flagged: { Icon: TriangleAlert, color: '#b4383d', soft: '#f9e5e4' },
+  Scanning: { Icon: LoaderCircle, color: '#95600f', soft: '#f8eedb' },
+} as const;
+
+const capabilities = [
+  {
+    Icon: Wallet,
+    title: 'Move money',
+    body: 'Send funds and make withdrawals in Tanzanian shillings, with a clear transaction history.',
+  },
+  {
+    Icon: ScanLine,
+    title: 'Recognize patterns',
+    body: 'Check transaction volume, unusual locations, and repeated failed withdrawals.',
+  },
+  {
+    Icon: ListChecks,
+    title: 'Review the signals',
+    body: 'Combine model risk scores with fraud rules and administrator review.',
+  },
+];
+
+const steps = [
+  'Submit a transaction',
+  'Check recent activity',
+  'Evaluate risk signals',
+  'Record the outcome',
+];
+
+function ScreeningPanel() {
+  useLanguage();
+  return (
+    <div className="relative">
+      <div className="screening-panel">
+        <div className="screening-panel__head">
+          <h2 className="text-[15px] font-semibold">{tr('Transaction screening')}</h2>
+          <span className="inline-flex items-center gap-2 rounded-full bg-[#eef0eb] px-2.5 py-1 text-[11px] font-medium text-p-muted">
+            <span className="live-dot" aria-hidden="true" />
+            {tr('Illustrative demo')}
+          </span>
+        </div>
+        <div className="screening-panel__body">
+          <span className="screening-scanline" aria-hidden="true" />
+          <ul aria-label={tr('Illustrative transaction activity')}>
+            {activity.map((row) => {
+              const style = statusStyle[row.status];
+              return (
+                <li
+                  key={row.id}
+                  className={`screening-row ${row.status === 'Scanning' ? 'screening-row--scanning' : ''}`}
+                >
+                  <span
+                    className="flex h-9 w-9 items-center justify-center rounded-[10px]"
+                    style={{ background: style.soft, color: style.color }}
+                    aria-hidden="true"
+                  >
+                    <style.Icon
+                      size={17}
+                      strokeWidth={2.2}
+                      className={row.status === 'Scanning' ? 'animate-spin' : undefined}
+                    />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="tabular block font-mono text-[13px] font-medium text-p-dark">
+                      {formatTsh(row.amount)}
+                    </span>
+                    <span className="mt-0.5 flex items-center gap-1 text-[11px] text-p-muted">
+                      <MapPin size={11} aria-hidden="true" />
+                      {row.route}
+                    </span>
+                    <span className="screening-row__meter mt-2 block" aria-hidden="true">
+                      <span style={{ width: `${row.score ?? 35}%`, background: style.color }} />
+                    </span>
+                  </span>
+                  <span
+                    className="tabular text-right font-mono text-xs font-medium"
+                    style={{ color: style.color }}
+                  >
+                    {tr(row.status)}
+                    {row.score !== undefined && (
+                      <span className="block text-[11px] opacity-75">{row.score}%</span>
+                    )}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+        <p className="screening-panel__foot">
+          {tr('Combine model risk scores with fraud rules and administrator review.')}
+        </p>
+      </div>
+      <span className="float-chip -top-5 right-14" aria-hidden="true">
+        <ShieldCheck size={14} className="text-s-teal" />
+        {tr('Rule checks')}
+      </span>
+      <span className="float-chip -right-5 -bottom-5 [animation-delay:-3s]" aria-hidden="true">
+        <Sparkles size={14} className="text-s-amber" />
+        {tr('Model risk score')}
+      </span>
+    </div>
+  );
+}
+
 export function Landing() {
   useLanguage();
-  const activity: Activity[] = [
-    { id: 1, amount: 125_000, status: 'Cleared', score: 12 },
-    { id: 2, amount: 2_500_000, status: 'Flagged', score: 86 },
-    { id: 3, amount: 50_000, status: 'Scanning' },
-  ];
+  const root = useReveal<HTMLElement>();
   return (
-    <main className="landing-page theme-sentinel min-h-screen bg-s-bg text-s-text">
+    <main ref={root} className="landing-page theme-sentinel min-h-screen bg-s-bg text-s-text">
       <nav
         aria-label={tr('Main navigation')}
-        className="site-nav mx-auto grid max-w-6xl grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-5 py-3"
+        className="site-nav mx-auto grid max-w-6xl grid-cols-[1fr_auto_auto_auto] items-center gap-6 px-6"
       >
-        <Link to="/" className="site-nav__brand font-display text-xl font-bold text-s-teal">
+        <Link to="/" className="site-nav__brand text-lg font-semibold">
           <span className="site-nav__mark" aria-hidden="true">
-            <ShieldCheck size={20} strokeWidth={2.5} />
+            <ShieldCheck size={20} strokeWidth={2.25} />
           </span>
           {tr('Sentinel')}
         </Link>
         <div className="site-nav__links flex items-center justify-self-end text-sm">
           <a href="#how-it-works">{tr('How it works')}</a>
           <a href="#capabilities">{tr('Capabilities')}</a>
-          <Link to="/register">{tr('Create account')}</Link>
+          <Link to="/register" className="site-nav__extra">
+            {tr('Create account')}
+          </Link>
         </div>
         <LanguageSwitcher dark pill />
-        <Link to="/login" className="site-nav__login text-s-teal">
+        <Link to="/login" className="site-nav__login">
           {tr('Sign in')}
         </Link>
       </nav>
-      <section className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-16 lg:grid-cols-2 lg:py-24">
-        <div>
-          <p className="mb-4 font-mono text-sm uppercase tracking-widest text-s-teal">
+
+      <section className="mx-auto grid max-w-6xl items-center gap-14 px-6 pt-14 pb-20 lg:grid-cols-[1.05fr_1fr] lg:pt-24 lg:pb-28">
+        <div className="hero-in">
+          <p className="eyebrow mb-6">
+            <span className="h-px w-8 bg-s-teal/60" aria-hidden="true" />
             {tr('Fraud Detection System')}
           </p>
-          <h1 className="font-display text-5xl font-bold leading-tight sm:text-6xl">
+          <h1 className="hero-title text-[2.6rem] leading-[1.05] sm:text-6xl">
             {tr('A clearer view of every transaction.')}
           </h1>
-          <p className="mt-6 max-w-lg text-lg text-s-dim">
+          <p className="mt-6 max-w-lg text-[17px] leading-relaxed text-s-dim">
             {tr(
               'Send money, manage your wallet, and spot suspicious activity with rule checks and machine learning working together.',
             )}
           </p>
-          <div className="mt-8 flex flex-wrap gap-4">
-            <Link
-              to="/register"
-              className="inline-flex items-center justify-center gap-3 rounded-md bg-s-teal px-6 py-3.5 font-medium text-s-bg"
-            >
+          <div className="mt-9 flex flex-wrap gap-3">
+            <Link to="/register" className="btn-sage">
               {tr('Create your account')}
               <ArrowUpRight size={18} aria-hidden="true" />
             </Link>
-            <Link
-              to="/login"
-              className="inline-flex items-center justify-center rounded-md border border-s-line px-6 py-3.5"
-            >
+            <Link to="/login" className="btn-outline-dark">
               {tr('Sign in')}
             </Link>
           </div>
         </div>
-        <div className="screening-panel rounded-2xl border border-s-line bg-s-panel p-6">
-          <div className="mb-5 flex justify-between">
-            <h2 className="font-semibold">{tr('Transaction screening')}</h2>
-            <span className="text-sm text-s-dim">{tr('Illustrative demo')}</span>
+        <div className="hero-in [animation-delay:0.15s]">
+          <ScreeningPanel />
+        </div>
+      </section>
+
+      <section id="capabilities" className="capabilities-section">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <div className="reveal mb-10 flex flex-wrap items-end justify-between gap-4">
+            <h2 className="max-w-md text-3xl font-medium tracking-tight sm:text-4xl">
+              {tr('Built around your wallet')}
+            </h2>
           </div>
-          <ul aria-label={tr('Illustrative transaction activity')} className="space-y-2">
-            {activity.map((row) => (
-              <li
-                key={row.id}
-                className="flex justify-between gap-3 rounded-lg bg-s-panel2 p-3 font-mono text-sm"
-              >
-                <span>{formatTsh(row.amount)}</span>
-                <span
-                  className={
-                    row.status === 'Flagged'
-                      ? 'text-s-red'
-                      : row.status === 'Scanning'
-                        ? 'text-s-amber'
-                        : 'text-s-teal'
-                  }
-                >
-                  {tr(row.status)}
-                  {tr(row.score === undefined ? '' : ` · ${row.score}%`)}
+          <div className="reveal grid gap-4 md:grid-cols-3">
+            {capabilities.map(({ Icon, title, body }) => (
+              <article key={title} className="capability-card">
+                <span className="capability-icon" aria-hidden="true">
+                  <Icon size={22} strokeWidth={1.75} />
                 </span>
+                <h3 className="mb-2.5 text-xl font-medium tracking-tight">{tr(title)}</h3>
+                <p className="leading-relaxed text-s-dim">{tr(body)}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="how-it-works" className="steps-section">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <h2 className="reveal mb-12 text-3xl font-medium tracking-tight sm:text-4xl">
+            {tr('How screening works')}
+          </h2>
+          <ol className="reveal grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {steps.map((text, index) => (
+              <li key={text} className="step">
+                <span className="mb-4 block font-mono text-xs tracking-widest text-s-teal">
+                  0{index + 1}
+                </span>
+                <span className="text-lg leading-snug">{tr(text)}</span>
               </li>
             ))}
-          </ul>
-          <p className="screening-summary">
-            {tr('Combine model risk scores with fraud rules and administrator review.')}
-          </p>
+          </ol>
         </div>
       </section>
-      <section id="capabilities" className="capabilities-section mx-auto max-w-6xl px-6 py-16">
-        <h2 className="mb-8 font-display text-3xl font-bold">{tr('Built around your wallet')}</h2>
-        <div className="grid gap-5 md:grid-cols-3">
-          {[
-            [
-              'Move money',
-              'Send funds and make withdrawals in Tanzanian shillings, with a clear transaction history.',
-            ],
-            [
-              'Recognize patterns',
-              'Check transaction volume, unusual locations, and repeated failed withdrawals.',
-            ],
-            [
-              'Review the signals',
-              'Combine model risk scores with fraud rules and administrator review.',
-            ],
-          ].map(([title, body], index) => (
-            <article
-              key={title}
-              className="capability-card rounded-xl border border-s-line bg-s-panel p-6"
-            >
-              <span className="capability-icon" aria-hidden="true">
-                {index === 0 ? (
-                  <Wallet size={26} />
-                ) : index === 1 ? (
-                  <ScanLine size={26} />
-                ) : (
-                  <ListChecks size={26} />
-                )}
-              </span>
-              <h3 className="mb-3 text-xl font-semibold">{tr(title)}</h3>
-              <p className="text-s-dim">{tr(body)}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-      <section id="how-it-works" className="mx-auto max-w-6xl px-6 py-12">
-        <h2 className="mb-8 font-display text-3xl font-bold">{tr('How screening works')}</h2>
-        <ol className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            'Submit a transaction',
-            'Check recent activity',
-            'Evaluate risk signals',
-            'Record the outcome',
-          ].map((text, index) => (
-            <li key={text} className="rounded-xl border border-s-line p-5">
-              <span className="mb-3 block font-mono text-s-teal">0{index + 1}</span>
-              {tr(text)}
-            </li>
-          ))}
-        </ol>
-      </section>
-      <section className="mx-auto max-w-6xl px-6 py-16">
-        <div className="closing-panel rounded-xl p-8 sm:p-12">
-          <h2 className="mb-4 text-3xl font-bold">{tr('Get started with Sentinel')}</h2>
-          <p className="mb-6 text-s-dim">
+
+      <section className="mx-auto max-w-6xl px-6 pb-20">
+        <div className="closing-panel reveal p-8 sm:p-14">
+          <h2 className="mb-3 max-w-lg text-3xl font-medium tracking-tight sm:text-4xl">
+            {tr('Get started with Sentinel')}
+          </h2>
+          <p className="mb-8 max-w-lg leading-relaxed text-s-bg/75">
             {tr('Create an account, complete administrator approval, and access your wallet.')}
           </p>
           <Link
             to="/register"
-            className="inline-block inline-flex items-center justify-center gap-3 rounded-md bg-s-teal px-6 py-3.5 font-medium text-s-bg"
+            className="inline-flex min-h-12 items-center gap-2.5 rounded-[10px] bg-s-bg px-6 font-medium text-s-text transition hover:bg-[#143b3b]"
           >
             {tr('Create account')}
+            <ArrowUpRight size={18} aria-hidden="true" />
           </Link>
         </div>
       </section>
-      <footer className="mx-auto max-w-6xl px-6 pb-8 text-sm text-s-dim">
-        {tr('Sentinel · Fraud Detection System')}
+
+      <footer className="border-t border-white/8">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-7 text-sm text-s-dim">
+          <span className="flex items-center gap-2">
+            <ShieldCheck size={16} className="text-s-teal" aria-hidden="true" />
+            {tr('Sentinel · Fraud Detection System')}
+          </span>
+          <Link to="/login" className="transition hover:text-white">
+            {tr('Sign in')}
+          </Link>
+        </div>
       </footer>
     </main>
   );

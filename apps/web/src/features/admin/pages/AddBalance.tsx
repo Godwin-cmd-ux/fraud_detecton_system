@@ -5,7 +5,6 @@ import { Link, Navigate, useParams } from 'react-router';
 import { ADJUSTMENT_TYPES, FRAUD, addBalanceSchema } from '@fraud/shared';
 import type { AdjustmentType } from '@fraud/shared';
 import { useAddBalance, useAdminUser, useUserAdjustments } from '../../../api/admin';
-import { useMe } from '../../../api/auth';
 import { TopHeader } from '../../../components/layout/TopHeader';
 import { Alert } from '../../../components/ui/Alert';
 import { Badge } from '../../../components/ui/Badge';
@@ -19,15 +18,14 @@ import { Card, EmptyState, Table, Td, Th } from '../../../components/ui/Table';
 import { formatDate, formatTsh } from '../../../lib/format';
 
 export const ADJUSTMENT_LABELS: Record<AdjustmentType, string> = {
-  deposit: '💰 Deposit',
-  bonus: '🎁 Bonus/Cashback',
-  refund: '🔄 Refund',
-  adjustment: '⚙️ Balance Adjustment',
+  deposit: 'Deposit',
+  bonus: 'Bonus/Cashback',
+  refund: 'Refund',
+  adjustment: 'Balance Adjustment',
 };
 
 export function AddBalancePage() {
   useLanguage();
-  const me = useMe();
   const { id } = useParams();
   const userId = Number(id);
   const user = useAdminUser(Number.isFinite(userId) ? userId : undefined);
@@ -45,7 +43,6 @@ export function AddBalancePage() {
   if (user.isError || !user.data) return <Navigate to="/admin/users" replace />;
   const u = user.data;
   const value = Number(amount) || 0;
-  const name = me.data?.name ?? 'Administrator';
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -79,8 +76,6 @@ export function AddBalancePage() {
       <TopHeader
         title={tr('Add Balance to Account')}
         subtitle={tr(`Manage user funds: ${u.fullName}`)}
-        name={name}
-        hint={tr('Administrator')}
       />
       <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
         <div className="flex flex-col gap-6">
@@ -159,7 +154,7 @@ export function AddBalancePage() {
                 </dl>
               </div>
               <Button type="submit" variant="success" loading={add.isPending}>
-                {tr('💰 Add Balance')}
+                {tr('Add Balance')}
               </Button>
             </form>
           </Card>
@@ -168,7 +163,7 @@ export function AddBalancePage() {
         <Card title={tr('Recent Balance Adjustments')}>
           {adjustments.isPending && <Spinner />}
           {adjustments.data && adjustments.data.length === 0 && (
-            <EmptyState icon="📭" title={tr('No adjustments yet')} />
+            <EmptyState icon="inbox" title={tr('No adjustments yet')} />
           )}
           {adjustments.data && adjustments.data.length > 0 && (
             <Table>

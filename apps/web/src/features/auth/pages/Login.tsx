@@ -55,15 +55,17 @@ export function Login() {
       <div
         role="group"
         aria-label={tr('Account type')}
-        className="account-tabs mb-6 grid grid-cols-2 gap-1 rounded-lg border border-s-line p-1"
+        data-active={role === 'admin' ? 1 : 0}
+        className="account-tabs mb-7 grid grid-cols-2 gap-1 rounded-[10px] border border-s-line p-1"
       >
+        <span className="account-tabs__thumb" aria-hidden="true" />
         {(['user', 'admin'] as const).map((value) => (
           <button
             key={value}
             type="button"
             aria-pressed={role === value}
             disabled={busy || remaining > 0}
-            className="rounded-lg border border-s-line px-4 py-2"
+            className="px-4 py-2"
             onClick={() => {
               setRole(value);
               setLogin('');
@@ -102,7 +104,7 @@ export function Login() {
           disabled={busy || remaining > 0}
         />
         <button className={`${authButtonClass} w-full`} disabled={busy || remaining > 0}>
-          {tr(remaining ? '🔒 Account Locked - Please wait' : busy ? 'Signing in…' : 'Sign in')}
+          {tr(remaining ? 'Account Locked - Please wait' : busy ? 'Signing in…' : 'Sign in')}
         </button>
       </form>
       <div className="mt-5 flex flex-wrap justify-between gap-3 text-sm text-s-teal">

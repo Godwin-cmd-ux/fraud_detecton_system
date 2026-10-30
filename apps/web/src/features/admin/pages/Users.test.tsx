@@ -51,14 +51,14 @@ describe('AdminUsersPage', () => {
       throw new Error(`unexpected ${path}`);
     });
     show();
-    expect(await screen.findByText('⏳ Pending')).toBeInTheDocument();
+    expect(await screen.findByText('Pending')).toBeInTheDocument();
     expect(screen.getByText('****4321')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
     expect(await screen.findByRole('dialog')).toHaveTextContent('Approve Pending Person?');
     fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
 
-    expect(await screen.findByText('✅ User approved successfully!')).toBeInTheDocument();
+    expect(await screen.findByText('User approved successfully!')).toBeInTheDocument();
     expect(calls).toContain('POST admin/users/7/approve');
   });
 });

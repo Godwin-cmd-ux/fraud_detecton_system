@@ -63,7 +63,7 @@ describe('SendPage', () => {
     expect(await screen.findByText(/You are about to send TSh 100,000.00/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
-    expect(await screen.findByText('🚫 TRANSACTION BLOCKED')).toBeInTheDocument();
+    expect(await screen.findByText('TRANSACTION BLOCKED')).toBeInTheDocument();
     expect(screen.getByText(/Risk Score: 85%/)).toBeInTheDocument();
     expect(screen.queryByLabelText('Amount (TSh) *')).not.toBeInTheDocument();
   });
@@ -93,8 +93,11 @@ describe('SendPage', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
 
     expect(await screen.findByText(/Transaction successful! You sent TSh 100,000.00 to Baraka Mushi/)).toBeInTheDocument();
-    expect(screen.getByText('⚠️ This transaction was flagged for review. Please monitor your account.')).toBeInTheDocument();
-    expect(screen.getByText('🚨 Location Change Detected')).toBeInTheDocument();
+    expect(screen.getByText('This transaction was flagged for review. Please monitor your account.')).toBeInTheDocument();
+    expect(screen.getByText('Location Change Detected')).toBeInTheDocument();
+    expect(
+      screen.getByText('Location changed from Dar es Salaam to Mwanza (843 km away) in 5 minutes'),
+    ).toBeInTheDocument();
   });
 
   it('refuses client-side when the amount exceeds the balance', async () => {

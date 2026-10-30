@@ -1,23 +1,25 @@
 import { useLanguage, translate as tr } from '../../i18n';
 import type { ReactNode } from 'react';
+import { CircleCheck, CircleX, Info, Ban, TriangleAlert } from 'lucide-react';
+import { plainText } from '../../lib/text';
 
 export type AlertKind = 'success' | 'error' | 'info' | 'warning' | 'blocked';
 
 const styles: Record<AlertKind, string> = {
-  success: 'bg-[#d1fae5] text-[#065f46] border-p-success',
-  error: 'bg-[#fee2e2] text-[#991b1b] border-p-danger',
-  info: 'bg-[#e0f2fe] text-[#075985] border-p-primary',
-  warning: 'bg-[#fed7aa] text-[#92400e] border-p-warning',
-  blocked: 'bg-[#fee2e2] text-[#7f1d1d] border-[#dc2626]',
+  success: 'bg-ok-soft text-ok border-ok/20',
+  error: 'bg-risk-soft text-risk border-risk/20',
+  info: 'bg-info-soft text-info border-info/20',
+  warning: 'bg-warn-soft text-warn border-warn/20',
+  blocked: 'bg-risk-soft text-risk border-risk/30',
 };
 
-const icons: Record<AlertKind, string> = {
-  success: '✅',
-  error: '❌',
-  info: 'ℹ️',
-  warning: '⚠️',
-  blocked: '🚫',
-};
+const icons = {
+  success: CircleCheck,
+  error: CircleX,
+  info: Info,
+  warning: TriangleAlert,
+  blocked: Ban,
+} as const;
 
 export function Alert({
   kind,
@@ -31,15 +33,16 @@ export function Alert({
   className?: string;
 }) {
   useLanguage();
+  const Icon = icons[kind];
   return (
     <div
       role={kind === 'error' || kind === 'blocked' ? 'alert' : 'status'}
-      className={`animate-slide-down rounded-lg border-l-4 p-4 text-sm ${styles[kind]} ${className}`}
+      className={`animate-slide-down flex gap-3 rounded-xl border p-4 text-sm leading-relaxed ${styles[kind]} ${className}`}
     >
-      {title && <div className="mb-1 text-base font-bold">{tr(title)}</div>}
-      <div className="whitespace-pre-line">
-        {!title && <span className="mr-1">{icons[kind]}</span>}
-        {tr(children)}
+      <Icon size={18} strokeWidth={2} className="mt-px shrink-0" aria-hidden="true" />
+      <div className="min-w-0 flex-1">
+        {title && <div className="mb-1 font-semibold">{tr(plainText(title))}</div>}
+        <div className="whitespace-pre-line text-p-text">{tr(plainText(children))}</div>
       </div>
     </div>
   );

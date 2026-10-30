@@ -2,7 +2,6 @@ import { useLanguage, translate as tr } from '../../../i18n';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import type { TransactionListItem, TransactionStatus } from '@fraud/shared';
-import { useMe } from '../../../api/auth';
 import { useLockTransactions, useUserTransactions } from '../../../api/me';
 import { TopHeader } from '../../../components/layout/TopHeader';
 import { Alert } from '../../../components/ui/Alert';
@@ -15,15 +14,11 @@ import { Select } from '../../../components/ui/Select';
 import { Spinner } from '../../../components/ui/Spinner';
 import { Card, EmptyState, Table, Td, Th } from '../../../components/ui/Table';
 import { formatDate, formatTsh, riskColor } from '../../../lib/format';
-import {
-  TransactionDetailsModal,
-  describeTransaction,
-} from '../components/TransactionDetailsModal';
+import { TransactionDetailsModal, TransactionLabel } from '../components/TransactionDetailsModal';
 import { UnlockOverlay } from '../components/UnlockOverlay';
 
 export function UserTransactionsPage() {
   useLanguage();
-  const me = useMe();
   const [params, setParams] = useSearchParams();
   const search = params.get('search') ?? '';
   const status = (params.get('status') ?? '') as TransactionStatus | '';
@@ -50,18 +45,16 @@ export function UserTransactionsPage() {
     setParams(p);
   }
   const hasFilters = Boolean(search || status || fraud);
-  const name = me.data?.name ?? 'Customer';
 
   return (
     <div>
       <TopHeader
         title={tr('Transaction History')}
         subtitle={tr('All your transfers, withdrawals and deposits')}
-        name={name}
         actions={
           query.data && !query.data.locked ? (
             <Button variant="secondary" size="sm" onClick={() => setConfirmLock(true)}>
-              {tr('🔒 Lock')}
+              {tr('Lock')}
             </Button>
           ) : null
         }
@@ -114,7 +107,7 @@ export function UserTransactionsPage() {
               {hasFilters && (
                 <Link
                   to="/app/transactions"
-                  className="text-sm font-semibold text-p-primary"
+                  className="card-link"
                   onClick={() => setSearchDraft('')}
                 >
                   {tr('Clear')}
@@ -124,7 +117,7 @@ export function UserTransactionsPage() {
           }
         >
           {query.data.items.length === 0 ? (
-            <EmptyState icon="📭" title={tr('No transactions found')} />
+            <EmptyState icon="inbox" title={tr('No transactions found')} />
           ) : (
             <>
               <Table>
@@ -144,7 +137,9 @@ export function UserTransactionsPage() {
                   {query.data.items.map((t) => (
                     <tr key={t.id}>
                       <Td className="font-mono text-xs">{t.transactionId}</Td>
-                      <Td>{tr(describeTransaction(t))}</Td>
+                      <Td>
+                        <TransactionLabel t={t} />
+                      </Td>
                       <Td className="font-semibold">{formatTsh(t.amount)}</Td>
                       <Td>
                         <StatusBadge status={t.status} />

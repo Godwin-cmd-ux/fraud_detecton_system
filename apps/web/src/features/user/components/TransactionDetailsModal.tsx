@@ -1,25 +1,44 @@
 import { useLanguage, translate as tr } from '../../../i18n';
 import type { TransactionListItem } from '@fraud/shared';
+import { ArrowDownLeft, ArrowDownToLine, ArrowUpRight, Plus } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { PredictionBadge, RiskBadge, StatusBadge } from '../../../components/ui/Badge';
 import { Modal } from '../../../components/ui/Modal';
 import { formatDate, formatTsh, riskColor } from '../../../lib/format';
 
-/** Row label; the dashboard used 📤/📥 arrows while the full list used 💸/💰, as in the original. */
-export function describeTransaction(
-  t: TransactionListItem,
-  variant: 'dashboard' | 'list' = 'list',
-): string {
+/** Plain-text row label for a transaction, from the current user's point of view. */
+export function describeTransaction(t: TransactionListItem): string {
   switch (t.direction) {
     case 'withdrawal':
-      return '🏧 Withdrawal';
+      return 'Withdrawal';
     case 'deposit':
-      return `💰 ${t.type.charAt(0).toUpperCase()}${t.type.slice(1)}`;
+      return `${t.type.charAt(0).toUpperCase()}${t.type.slice(1)}`;
     case 'sent':
-      return `${variant === 'dashboard' ? '📤' : '💸'} Sent to ${t.counterpartyName ?? tr('Unknown')}`;
+      return `Sent to ${t.counterpartyName ?? tr('Unknown')}`;
     case 'received':
-      return `${variant === 'dashboard' ? '📥' : '💰'} Received from ${t.counterpartyName ?? tr('Unknown')}`;
+      return `Received from ${t.counterpartyName ?? tr('Unknown')}`;
   }
+}
+
+const directionIcons = {
+  sent: { Icon: ArrowUpRight, tone: 'tx-dir--out' },
+  withdrawal: { Icon: ArrowDownToLine, tone: 'tx-dir--out' },
+  received: { Icon: ArrowDownLeft, tone: 'tx-dir--in' },
+  deposit: { Icon: Plus, tone: 'tx-dir--in' },
+} as const;
+
+/** Table cell content: a direction marker followed by the description. */
+export function TransactionLabel({ t }: { t: TransactionListItem }) {
+  useLanguage();
+  const { Icon, tone } = directionIcons[t.direction];
+  return (
+    <span className="inline-flex items-center gap-2.5 whitespace-nowrap">
+      <span className={`tx-dir ${tone}`} aria-hidden="true">
+        <Icon size={14} strokeWidth={2} />
+      </span>
+      {tr(describeTransaction(t))}
+    </span>
+  );
 }
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
@@ -69,7 +88,7 @@ export function TransactionDetailsModal({
               className="mt-4 rounded-lg border border-p-border p-3"
               style={{ borderLeft: `4px solid ${riskColor(t.fraudScore)}` }}
             >
-              <div className="mb-2 text-sm font-bold text-p-dark">{tr('🛡️ Fraud Analysis')}</div>
+              <div className="mb-2 text-sm font-bold text-p-dark">{tr('Fraud Analysis')}</div>
               <Row label={tr('Risk Score')}>
                 <span style={{ color: riskColor(t.fraudScore) }}>{t.fraudScore}%</span>
               </Row>
@@ -81,7 +100,7 @@ export function TransactionDetailsModal({
               </Row>
               {t.fraudScore > 70 && (
                 <p className="mt-2 text-sm font-semibold text-p-danger">
-                  {tr('⚠️ This transaction was flagged as high risk')}
+                  {tr('This transaction was flagged as high risk')}
                 </p>
               )}
             </div>

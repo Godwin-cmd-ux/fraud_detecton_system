@@ -7,10 +7,10 @@ describe('display formatting', () => {
     expect(formatTsh(0)).toBe('TSh 0.00');
   });
   it('preserves fraud score color boundaries', () => {
-    expect(riskColor(71)).toBe('#ef4444');
-    expect(riskColor(70)).toBe('#f59e0b');
-    expect(riskColor(41)).toBe('#f59e0b');
-    expect(riskColor(40)).toBe('#10b981');
+    expect(riskColor(71)).toBe('#b4383d');
+    expect(riskColor(70)).toBe('#95600f');
+    expect(riskColor(41)).toBe('#95600f');
+    expect(riskColor(40)).toBe('#1d7550');
   });
   it('shows only the last four card digits', () => {
     expect(maskCard('1234567812345678')).toBe('****5678');

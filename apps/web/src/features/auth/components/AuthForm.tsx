@@ -5,12 +5,13 @@ import { Link } from 'react-router';
 import { ApiError, api } from '../../../api/client';
 import { LanguageSwitcher } from '../../../i18n/LanguageSwitcher';
 import { localizeValidity } from '../../../i18n/validation';
+import { plainText } from '../../../lib/text';
 import { ShieldCheck, ArrowLeft, ArrowUpRight, Fingerprint } from 'lucide-react';
 
 export const authInputClass =
-  'w-full rounded-lg border border-s-line bg-s-bg px-3 py-3 text-s-text focus:outline-none focus:ring-2 focus:ring-s-teal';
+  'w-full rounded-[10px] border border-s-line bg-s-bg px-3.5 py-3 text-s-text focus:border-s-teal focus:outline-none focus:ring-4 focus:ring-s-teal/10';
 export const authButtonClass =
-  'rounded-lg bg-s-teal px-5 py-3 font-semibold text-s-bg disabled:cursor-not-allowed disabled:opacity-50';
+  'rounded-[10px] bg-s-teal px-5 py-3 font-medium text-s-bg shadow-sm shadow-s-teal/20 disabled:cursor-not-allowed disabled:opacity-50';
 
 export function AuthForm({
   title,
@@ -25,8 +26,11 @@ export function AuthForm({
   return (
     <main className="auth-page theme-sentinel min-h-screen text-s-text">
       <aside className="auth-story hidden lg:flex">
-        <Link to="/" className="flex items-center gap-3 text-xl font-semibold">
-          <ShieldCheck size={28} />
+        <span className="auth-rings" aria-hidden="true" />
+        <Link to="/" className="flex items-center gap-3 text-lg font-semibold">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-s-teal/12 text-s-teal">
+            <ShieldCheck size={20} aria-hidden="true" />
+          </span>
           Sentinel
           <span className="ml-1 text-xs font-normal text-white/50">
             / {tr('Fraud Detection System')}
@@ -36,10 +40,8 @@ export function AuthForm({
           <div className="auth-emblem mb-10">
             <Fingerprint size={72} strokeWidth={1} />
           </div>
-          <p className="mb-5 text-xs font-medium tracking-[.18em] uppercase text-s-teal">
-            {tr('Built around your wallet')}
-          </p>
-          <h2 className="max-w-md text-5xl leading-[1.12] font-medium tracking-tight">
+          <p className="eyebrow mb-5 flex">{tr('Built around your wallet')}</p>
+          <h2 className="max-w-md text-5xl leading-[1.08] font-medium tracking-[-0.03em]">
             {tr('A clearer view of every transaction.')}
           </h2>
           <p className="mt-6 max-w-sm text-base leading-relaxed text-white/60">
@@ -53,17 +55,26 @@ export function AuthForm({
       </aside>
       <div className="auth-content px-5 py-8 sm:px-10">
         <div className="auth-topbar mx-auto flex w-full max-w-lg items-center justify-between gap-4">
-          <Link to="/" className="inline-flex items-center gap-2 text-sm text-s-dim">
-            <ArrowLeft size={16} aria-hidden="true" />
+          <Link
+            to="/"
+            className="group inline-flex items-center gap-2 text-sm text-s-dim transition hover:text-s-text"
+          >
+            <ArrowLeft
+              size={16}
+              className="transition-transform group-hover:-translate-x-0.5"
+              aria-hidden="true"
+            />
             {tr('Sentinel')}
           </Link>
           <LanguageSwitcher dark />
         </div>
         <div className="auth-form mx-auto w-full max-w-lg py-12 sm:py-16">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <ShieldCheck size={32} className="text-s-teal" aria-hidden="true" />
-          </div>
-          <h1 className="mt-6 font-display text-4xl font-medium tracking-tight">{tr(title)}</h1>
+          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-s-teal/10 text-s-teal">
+            <ShieldCheck size={22} aria-hidden="true" />
+          </span>
+          <h1 className="mt-6 font-display text-[2.1rem] font-medium tracking-[-0.025em]">
+            {tr(title)}
+          </h1>
           {subtitle && <p className="mt-3 leading-relaxed text-s-dim">{tr(subtitle)}</p>}
           <div className="mt-8">{children}</div>
         </div>
@@ -80,7 +91,7 @@ export function AuthField({
   const id = props.id ?? props.name;
   return (
     <div className="space-y-2">
-      <label htmlFor={id} className="block text-sm font-medium">
+      <label htmlFor={id} className="block text-[13px] font-medium">
         {tr(label)}
       </label>
       <input
@@ -105,9 +116,9 @@ export function AuthError({ message }: { message: string }) {
   return message ? (
     <p
       role="alert"
-      className="mb-4 whitespace-pre-line rounded-lg border border-s-red p-3 text-s-red"
+      className="animate-slide-down mb-4 whitespace-pre-line rounded-[10px] border border-s-red/25 bg-risk-soft p-3.5 text-sm text-s-red"
     >
-      {tr(message)}
+      {tr(plainText(message))}
     </p>
   ) : null;
 }

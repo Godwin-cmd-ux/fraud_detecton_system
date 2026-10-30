@@ -1,6 +1,5 @@
 import { useLanguage, translate as tr } from '../../../i18n';
 import { useSearchParams } from 'react-router';
-import { useMe } from '../../../api/auth';
 import { TopHeader } from '../../../components/layout/TopHeader';
 import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
@@ -8,8 +7,7 @@ import { Button } from '../../../components/ui/Button';
 
 export function MonitoringHeader({ title }: { title: string }) {
   useLanguage();
-  const me = useMe();
-  return <TopHeader title={tr(title)} name={me.data?.name ?? 'Administrator'} />;
+  return <TopHeader title={tr(title)} />;
 }
 
 export function useMonitoringFilters() {

@@ -4,7 +4,6 @@ import { Link, useSearchParams } from 'react-router';
 import type { AdminUserRow } from '@fraud/shared';
 import { useAdminUsers, useDeleteUser, useUserAction } from '../../../api/admin';
 import type { UserAction } from '../../../api/admin';
-import { useMe } from '../../../api/auth';
 import { TopHeader } from '../../../components/layout/TopHeader';
 import { Alert } from '../../../components/ui/Alert';
 import type { AlertKind } from '../../../components/ui/Alert';
@@ -37,7 +36,6 @@ type Pending =
 
 export function AdminUsersPage() {
   useLanguage();
-  const me = useMe();
   const [params, setParams] = useSearchParams();
   const search = params.get('search') ?? '';
   const page = Number(params.get('page') ?? '1') || 1;
@@ -73,8 +71,6 @@ export function AdminUsersPage() {
     setPending(null);
     setViewing(null);
   }
-
-  const name = me.data?.name ?? 'Administrator';
   const busy = action.isPending || remove.isPending;
 
   return (
@@ -82,8 +78,6 @@ export function AdminUsersPage() {
       <TopHeader
         title={tr('User Management')}
         subtitle={tr('View and manage all registered users')}
-        name={name}
-        hint={tr('Administrator')}
       />
       {flash && (
         <Alert kind={flash.kind} className="mb-4">
@@ -111,11 +105,7 @@ export function AdminUsersPage() {
               {tr('Search')}
             </Button>
             {search && (
-              <Link
-                to="/admin/users"
-                className="text-sm font-semibold text-p-primary"
-                onClick={() => setDraft('')}
-              >
+              <Link to="/admin/users" className="card-link" onClick={() => setDraft('')}>
                 {tr('Clear')}
               </Link>
             )}
@@ -125,7 +115,7 @@ export function AdminUsersPage() {
         {users.isPending && <Spinner />}
         {users.isError && <Alert kind="error">{tr('Could not load users.')}</Alert>}
         {users.data && users.data.items.length === 0 && (
-          <EmptyState icon="👥" title={tr('No users found')} />
+          <EmptyState icon="users" title={tr('No users found')} />
         )}
         {users.data && users.data.items.length > 0 && (
           <>
@@ -169,10 +159,10 @@ export function AdminUsersPage() {
                             onDelete={() => setPending({ kind: 'delete', user: u })}
                           />
                           <Link to={`/admin/users/${u.id}/balance`}>
-                            <Button size="sm">{tr('💰 Add Balance')}</Button>
+                            <Button size="sm">{tr('Add Balance')}</Button>
                           </Link>
                           <Button size="sm" variant="ghost" onClick={() => setViewing(u)}>
-                            {tr('👁️ View')}
+                            {tr('View')}
                           </Button>
                         </div>
                       </Td>
@@ -210,7 +200,7 @@ export function AdminUsersPage() {
         body={tr(
           pending
             ? pending.kind === 'delete'
-              ? `⚠️ This action is permanent and cannot be undone.\n\n${pending.user.fullName} (${pending.user.email}) will be removed.`
+              ? `This action is permanent and cannot be undone.\n\n${pending.user.fullName} (${pending.user.email}) will be removed.`
               : ACTION_TEXT[pending.action].body
             : '',
         )}

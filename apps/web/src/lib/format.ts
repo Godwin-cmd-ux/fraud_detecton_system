@@ -21,7 +21,7 @@ export function formatDate(iso: string, style: 'date' | 'minute' | 'second' | 'l
 }
 
 export function riskColor(score: number): string {
-  return score > 70 ? '#ef4444' : score > 40 ? '#f59e0b' : '#10b981';
+  return score > 70 ? '#b4383d' : score > 40 ? '#95600f' : '#1d7550';
 }
 
 export function maskCard(card: string): string {
