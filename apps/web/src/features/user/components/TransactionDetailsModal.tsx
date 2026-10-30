@@ -1,24 +1,15 @@
 import { useLanguage, translate as tr } from '../../../i18n';
+import { useState } from 'react';
 import type { TransactionListItem } from '@fraud/shared';
-import { ArrowDownLeft, ArrowDownToLine, ArrowUpRight, Plus } from 'lucide-react';
+import { ArrowDownLeft, ArrowDownToLine, ArrowUpRight, Download, Plus } from 'lucide-react';
+import { useMe } from '../../../api/auth';
+import { Alert } from '../../../components/ui/Alert';
 import { Button } from '../../../components/ui/Button';
 import { PredictionBadge, RiskBadge, StatusBadge } from '../../../components/ui/Badge';
 import { Modal } from '../../../components/ui/Modal';
 import { formatDate, formatTsh, riskColor } from '../../../lib/format';
-
-/** Plain-text row label for a transaction, from the current user's point of view. */
-export function describeTransaction(t: TransactionListItem): string {
-  switch (t.direction) {
-    case 'withdrawal':
-      return 'Withdrawal';
-    case 'deposit':
-      return `${t.type.charAt(0).toUpperCase()}${t.type.slice(1)}`;
-    case 'sent':
-      return `Sent to ${t.counterpartyName ?? tr('Unknown')}`;
-    case 'received':
-      return `Received from ${t.counterpartyName ?? tr('Unknown')}`;
-  }
-}
+import { downloadReceipt } from '../../../lib/receipt';
+import { describeTransaction } from '../../../lib/transactions';
 
 const directionIcons = {
   sent: { Icon: ArrowUpRight, tone: 'tx-dir--out' },
@@ -59,20 +50,56 @@ export function TransactionDetailsModal({
   onClose: () => void;
 }) {
   useLanguage();
+  const me = useMe();
+  const [downloading, setDownloading] = useState(false);
+  const [error, setError] = useState('');
   const t = transaction;
+
+  function close() {
+    setError('');
+    onClose();
+  }
+
+  async function download() {
+    if (!t) return;
+    setDownloading(true);
+    setError('');
+    try {
+      await downloadReceipt(t, {
+        name: me.data?.name ?? tr('Customer'),
+        email: me.data?.email,
+      });
+    } catch {
+      setError('Could not create the receipt. Please try again.');
+    } finally {
+      setDownloading(false);
+    }
+  }
+
   return (
     <Modal
       open={t !== null}
-      onClose={onClose}
+      onClose={close}
       title={tr('Transaction Details')}
       footer={
-        <Button variant="secondary" onClick={onClose}>
-          {tr('Close')}
-        </Button>
+        <>
+          <Button variant="secondary" onClick={close}>
+            {tr('Close')}
+          </Button>
+          <Button onClick={download} loading={downloading}>
+            {!downloading && <Download size={15} aria-hidden="true" />}
+            {tr(downloading ? 'Preparing…' : 'Download receipt')}
+          </Button>
+        </>
       }
     >
       {t && (
         <div>
+          {error && (
+            <Alert kind="error" className="mb-3">
+              {tr(error)}
+            </Alert>
+          )}
           <Row label={tr('Transaction ID')}>
             <span className="font-mono text-xs">{t.transactionId}</span>
           </Row>

@@ -72,6 +72,7 @@ export const messages: Record<string, string> = {
   'Received from {0}': 'Imepokelewa kutoka kwa {0}',
   'Sent to {0}': 'Imetumwa kwa {0}',
   'More actions for {0}': 'Vitendo zaidi kwa {0}',
+  'Generated on {0} (EAT)': 'Imetengenezwa {0} (EAT)',
   'Your transfer went through, but its risk score was between {0} and {1}, so an administrator will look at it. No action is needed from you.':
     'Muamala wako umefanikiwa, lakini alama yake ya hatari ilikuwa kati ya {0} na {1}, kwa hiyo msimamizi ataukagua. Huhitaji kufanya chochote.',
   'After {0} failed withdrawal attempts, withdrawals are paused to protect your account. The block clears {1} hours after the last failed attempt.':

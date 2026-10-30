@@ -53,6 +53,25 @@ export const sw: Record<string, string> = {
   Flagged: 'Umewekewa alama',
   Scanning: 'Unachunguzwa',
   'Rule checks': 'Ukaguzi wa kanuni',
+  'Transaction receipt': 'Risiti ya muamala',
+  'Download receipt': 'Pakua risiti',
+  'Preparing…': 'Inaandaa…',
+  'Account holder': 'Mmiliki wa akaunti',
+  'Security check': 'Ukaguzi wa usalama',
+  'Blocked by fraud checks': 'Imezuiwa na ukaguzi wa udanganyifu',
+  'No money moved. Contact support if you believe this is a mistake.':
+    'Hakuna pesa iliyohamishwa. Wasiliana na huduma kwa wateja kama unaamini hili ni kosa.',
+  'The transaction went through and an administrator will review it.':
+    'Muamala umefanikiwa na msimamizi ataukagua.',
+  'Not yet analysed': 'Bado haujachambuliwa',
+  'Fraud screening for this transaction has not finished.':
+    'Uchunguzi wa udanganyifu wa muamala huu bado haujakamilika.',
+  Passed: 'Umepita',
+  'This transaction passed all fraud checks.': 'Muamala huu umepita ukaguzi wote wa udanganyifu.',
+  'This receipt reflects your account records at the time it was generated.':
+    'Risiti hii inaonyesha kumbukumbu za akaunti yako wakati ilipotengenezwa.',
+  'Could not create the receipt. Please try again.':
+    'Imeshindwa kutengeneza risiti. Tafadhali jaribu tena.',
   FAQ: 'Maswali',
   'Inside Sentinel': 'Ndani ya Sentinel',
   'One wallet, two views': 'Pochi moja, mitazamo miwili',
