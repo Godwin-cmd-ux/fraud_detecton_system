@@ -45,17 +45,19 @@ describe('withdrawal happy path and validation', () => {
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({
       outcome: 'success',
-      newBalance: 950_000,
+      // 1,000,000 - 50,000 - 1.1% fee (550.00).
+      newBalance: 949_450,
       message: 'Withdrawal successful! You withdrew TSh 50,000.00',
       fraudPrediction: 'LEGIT',
     });
-    expect(await balanceOf()).toBe('950000.00');
+    expect(await balanceOf()).toBe('949450.00');
     expect(res.body.createdAt).toBe((await lastTx())!.createdAt.toISOString());
     expect(await lastTx()).toMatchObject({
       transactionType: 'withdrawal',
       status: 'SUCCESS',
       senderId: A.id,
       receiverId: null,
+      fee: '550.00',
       message: 'rent',
     });
   });

@@ -54,14 +54,15 @@ describe('transfer happy path and validation', () => {
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({
       outcome: 'success',
-      newBalance: 4_900_000,
+      // 5,000,000 - 100,000 - 0.8% fee (800.00).
+      newBalance: 4_899_200,
       riskScore: 0,
       riskLevel: 'LOW',
       flaggedForReview: false,
       fraudPrediction: 'LEGIT',
       message: 'Transaction successful! You sent TSh 100,000.00 to Baraka Mushi',
     });
-    expect(await balanceOf(A.id)).toBe('4900000.00');
+    expect(await balanceOf(A.id)).toBe('4899200.00');
     expect(await balanceOf(B.id)).toBe('1100000.00');
     const tx = await lastTx();
     // The response carries the stored timestamp so the client can issue a receipt.
@@ -74,6 +75,7 @@ describe('transfer happy path and validation', () => {
       riskLevel: 'LOW',
       senderName: 'Amina Hassan',
       receiverName: 'Baraka Mushi',
+      fee: '800.00',
       message: 'rent',
       transactionLocation: 'Arusha',
       modelVersion: '1.0.0',
@@ -104,6 +106,41 @@ describe('transfer happy path and validation', () => {
     const inactive = await send({});
     expect(inactive.status).toBe(400);
     expect(inactive.body.error.message).toContain('Invalid receiver selected');
+    expect(await txCount()).toBe(0);
+  });
+
+  it('addresses the recipient by card number and resolves the city from coordinates', async () => {
+    // Mwanza, silent geolocation reported by a browser; no city is sent by the client.
+    const res = await send({
+      receiverId: undefined,
+      cardNumber: B.cardNumber,
+      amount: 250_000,
+      location: undefined,
+      coordinates: { latitude: -2.5164, longitude: 32.9171 },
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.outcome).toBe('success');
+    expect(await balanceOf(B.id)).toBe('1250000.00');
+
+    const tx = await lastTx();
+    expect(tx).toMatchObject({
+      receiverId: B.id,
+      receiverName: 'Baraka Mushi',
+      transactionLocation: 'Mwanza',
+      txLat: '-2.516400',
+      txLng: '32.917100',
+    });
+    const [a] = await t.db
+      .select({ loc: users.lastKnownLocation, lat: users.lastLat, lng: users.lastLng })
+      .from(users)
+      .where(eq(users.id, A.id));
+    expect(a).toEqual({ loc: 'Mwanza', lat: '-2.516400', lng: '32.917100' });
+  });
+
+  it('rejects a card number nobody holds', async () => {
+    const res = await send({ receiverId: undefined, cardNumber: '4499999999999999' });
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toContain('Invalid receiver selected');
     expect(await txCount()).toBe(0);
   });
 });
@@ -246,7 +283,8 @@ describe('atomicity', () => {
     const statuses = [r1.status, r2.status].sort();
     expect(statuses[0]).toBe(200);
     expect([400, 409]).toContain(statuses[1]);
-    expect(await balanceOf(A.id)).toBe('200.00');
+    // One 800 transfer plus its 6.40 fee succeeded; the other was refused outright.
+    expect(await balanceOf(A.id)).toBe('193.60');
     const ok = await t.db.execute(sql`select count(*)::int as c from transactions where status = 'SUCCESS'`);
     expect(ok.rows[0]).toEqual({ c: 1 });
   });

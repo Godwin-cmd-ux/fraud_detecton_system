@@ -1,4 +1,12 @@
-import { Eye, EyeOff, ArrowUpRight, ArrowDownToLine, ArrowLeftRight } from 'lucide-react';
+import {
+  Eye,
+  EyeOff,
+  ArrowUpRight,
+  ArrowDownToLine,
+  ArrowLeftRight,
+  ShieldCheck,
+  Wifi,
+} from 'lucide-react';
 import { useLanguage, translate as tr } from '../../../i18n';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
@@ -13,11 +21,104 @@ import { Modal } from '../../../components/ui/Modal';
 import { Spinner } from '../../../components/ui/Spinner';
 import { StatCard, StatGrid } from '../../../components/ui/StatCard';
 import { Card, EmptyState, Table, Td, Th } from '../../../components/ui/Table';
+import type { UserDashboard } from '../../../api/types';
 import { formatDate, formatTsh } from '../../../lib/format';
 import { ChangePasswordCard } from '../components/ChangePasswordCard';
 import { TransactionLabel } from '../components/TransactionDetailsModal';
 
 const MASK = '••••••••••••••••';
+
+/**
+ * The card issued to the account, drawn at the real thing's proportions (85.6 x 53.98 mm, so
+ * 1.586:1) with a two-tone gradient, chip, contactless mark and the holder's name.
+ */
+function VirtualCard({ card, holder }: { card: UserDashboard['user']['card']; holder: string }) {
+  useLanguage();
+  const [revealed, setRevealed] = useState(false);
+  const groups = revealed
+    ? (card.number.match(/.{4}/g) ?? [])
+    : ['••••', '••••', '••••', card.number.slice(-4)];
+  const micro = 'text-[8px] font-medium tracking-[0.2em] text-white/55 uppercase';
+  return (
+    <div className="w-full max-w-[400px]">
+      {/* 1.586:1 keeps the card looking like the plastic it represents on every width. */}
+      <div
+        className="relative flex aspect-[1.586/1] w-full flex-col overflow-hidden rounded-[18px] px-5 py-4 text-white ring-1 ring-white/25 shadow-[0_26px_50px_-22px_rgba(0,0,0,0.9)] sm:rounded-[20px] sm:px-6 sm:py-5"
+        style={{
+          background: 'linear-gradient(125deg, #06211f 0%, #0e2a2c 32%, #14524a 66%, #1d7550 100%)',
+        }}
+      >
+        {/* Depth: two soft light pools plus a faint engraved pattern. */}
+        <span className="pointer-events-none absolute -top-14 -right-10 h-44 w-44 rounded-full bg-[#b3dcc0]/25 blur-2xl" />
+        <span className="pointer-events-none absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-[#2b9c6c]/35 blur-2xl" />
+        <span
+          className="pointer-events-none absolute inset-0 opacity-[0.05]"
+          style={{
+            backgroundImage:
+              'repeating-linear-gradient(115deg, #ffffff 0 1px, transparent 1px 10px)',
+          }}
+        />
+
+        <div className="relative flex items-start justify-between">
+          <span className="flex items-center gap-1.5 text-[13px] font-semibold tracking-tight">
+            <ShieldCheck size={14} aria-hidden="true" />
+            Sentinel
+          </span>
+          <span className="rounded-full border border-white/25 px-2 py-0.5 text-[8px] font-semibold tracking-[0.18em] uppercase">
+            {tr('Virtual')}
+          </span>
+        </div>
+
+        <div className="relative mt-3 flex items-center gap-2.5 sm:mt-4">
+          {/* Chip: brushed-gold gradient with the usual contact pads. */}
+          <span className="relative flex h-6 w-8 items-center justify-center overflow-hidden rounded-[5px] bg-[linear-gradient(135deg,#f8ecc0_0%,#d9b968_45%,#a9822f_100%)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.35)] sm:h-7 sm:w-9">
+            <span className="absolute inset-x-1 top-1/2 h-px bg-[#8a6a24]/60" />
+            <span className="absolute inset-y-1 left-1/2 w-px bg-[#8a6a24]/60" />
+          </span>
+          <Wifi size={16} className="rotate-90 opacity-70" aria-hidden="true" />
+        </div>
+
+        <div className="tabular relative mt-3 flex items-center font-mono text-[15px] tracking-[0.12em] sm:mt-4 sm:text-[18px]">
+          {groups.map((group, index) => (
+            <span key={index} className="mr-2.5 last:mr-0 sm:mr-3">
+              {group}
+            </span>
+          ))}
+        </div>
+
+        <div className="relative mt-auto flex items-end justify-between gap-3 pt-2">
+          <div className="min-w-0">
+            <div className={micro}>{tr('Card holder')}</div>
+            <div className="truncate text-[11px] font-medium tracking-[0.08em] uppercase">
+              {holder}
+            </div>
+          </div>
+          <div className="shrink-0">
+            <div className={micro}>{tr('Expires')}</div>
+            <div className="tabular font-mono text-[11px]">{card.expiry ?? '—'}</div>
+          </div>
+          <div className="shrink-0">
+            <div className={micro}>{tr('CVC')}</div>
+            <div className="tabular font-mono text-[11px]">
+              {revealed ? (card.cvc ?? '•••') : '•••'}
+            </div>
+          </div>
+          <span className="shrink-0 text-[15px] font-bold italic tracking-tight text-white/90">
+            VISA
+          </span>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={() => setRevealed((v) => !v)}
+        className="mt-2.5 inline-flex items-center gap-1.5 rounded-md px-0.5 text-[11px] font-medium text-white/60 transition hover:text-white"
+      >
+        {revealed ? <EyeOff size={13} aria-hidden="true" /> : <Eye size={13} aria-hidden="true" />}
+        {tr(revealed ? 'Hide card details' : 'Show card details')}
+      </button>
+    </div>
+  );
+}
 
 export function UserDashboardPage() {
   useLanguage();
@@ -78,14 +179,16 @@ export function UserDashboardPage() {
         </Alert>
       )}
 
-      <div className="balance-card mb-6 grid gap-7 rounded-card p-6 text-white sm:p-8 lg:grid-cols-[1fr_auto] lg:items-end">
+      <div className="balance-card mb-6 grid gap-6 rounded-card p-5 text-white sm:p-6 lg:grid-cols-[minmax(0,380px)_1fr] lg:items-center lg:gap-10 lg:p-7">
+        {d.user.card && <VirtualCard card={d.user.card} holder={d.user.fullName} />}
+
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3">
             <span className="text-xs font-medium tracking-[0.12em] text-white/65 uppercase">
               {tr('Available Balance')}
             </span>
             <span className="tabular rounded-md border border-white/12 px-2 py-0.5 font-mono text-[11px] text-white/60">
-              •••• {d.user.cardLast4}
+              •••• {d.user.card?.number.slice(-4) ?? ''}
             </span>
           </div>
           <button
@@ -114,29 +217,29 @@ export function UserDashboardPage() {
                   : 'Click the balance amount to reveal',
             )}
           </div>
-        </div>
-        <div className="flex flex-wrap gap-2.5">
-          <Link
-            to="/app/send"
-            className="inline-flex min-h-11 items-center gap-2 rounded-[10px] bg-s-teal px-4 text-sm font-medium text-s-bg transition hover:bg-[#c6e8d0] active:scale-[0.98]"
-          >
-            <ArrowUpRight size={17} aria-hidden="true" />
-            {tr('Send Money')}
-          </Link>
-          <Link
-            to="/app/withdraw"
-            className="inline-flex min-h-11 items-center gap-2 rounded-[10px] border border-white/15 px-4 text-sm font-medium text-white transition hover:border-white/30 hover:bg-white/5 active:scale-[0.98]"
-          >
-            <ArrowDownToLine size={17} aria-hidden="true" />
-            {tr('Withdraw')}
-          </Link>
-          <Link
-            to="/app/transactions"
-            className="inline-flex min-h-11 items-center gap-2 rounded-[10px] border border-white/15 px-4 text-sm font-medium text-white transition hover:border-white/30 hover:bg-white/5 active:scale-[0.98]"
-          >
-            <ArrowLeftRight size={17} aria-hidden="true" />
-            {tr('View Transactions')}
-          </Link>
+          <div className="mt-5 flex flex-wrap gap-2.5">
+            <Link
+              to="/app/send"
+              className="inline-flex min-h-11 items-center gap-2 rounded-[10px] bg-s-teal px-4 text-sm font-medium text-s-bg transition hover:bg-[#c6e8d0] active:scale-[0.98]"
+            >
+              <ArrowUpRight size={17} aria-hidden="true" />
+              {tr('Send Money')}
+            </Link>
+            <Link
+              to="/app/withdraw"
+              className="inline-flex min-h-11 items-center gap-2 rounded-[10px] border border-white/15 px-4 text-sm font-medium text-white transition hover:border-white/30 hover:bg-white/5 active:scale-[0.98]"
+            >
+              <ArrowDownToLine size={17} aria-hidden="true" />
+              {tr('Withdraw')}
+            </Link>
+            <Link
+              to="/app/transactions"
+              className="inline-flex min-h-11 items-center gap-2 rounded-[10px] border border-white/15 px-4 text-sm font-medium text-white transition hover:border-white/30 hover:bg-white/5 active:scale-[0.98]"
+            >
+              <ArrowLeftRight size={17} aria-hidden="true" />
+              {tr('View Transactions')}
+            </Link>
+          </div>
         </div>
       </div>
 

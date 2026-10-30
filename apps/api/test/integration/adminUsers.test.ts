@@ -78,7 +78,11 @@ describe('create user', () => {
     expect(res.status).toBe(201);
     expect(res.body.message).toBe('✅ User created successfully! Account is active.');
     const [u] = await t.db.select().from(users).where(eq(users.email, body.email));
-    expect(u).toMatchObject({ isApproved: true, balance: '25000.00', phone: '+255711222333', cardNumber: '4242424242424242' });
+    expect(u).toMatchObject({ isApproved: true, balance: '25000.00', phone: '+255711222333' });
+    // The server issues the card now, so the submitted number is not stored.
+    expect(u!.cardNumber).toMatch(/^44\d{14}$/);
+    expect(u!.cardExpiry).toMatch(/^\d{2}\/\d{2}$/);
+    expect(u!.cardCvc).toMatch(/^\d{3}$/);
     const [a] = await audits();
     expect(a).toMatchObject({
       actionType: 'create_user',

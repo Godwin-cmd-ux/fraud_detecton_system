@@ -114,13 +114,15 @@ describe('Account creation', () => {
     mockedApi.mockResolvedValueOnce(questions).mockResolvedValueOnce({ message: 'Pending approval' });
     show(<Register />); await screen.findByLabelText('Mother name?');
     fill('Full name', 'Amina Hassan'); fill('Email', 'amina@example.com'); fill('Phone number', '+255 712 345 678');
-    fill('Card number', '1234567812345678'); fill('Password', 'secret123'); fill('Confirm password', 'secret123');
+    fill('Password', 'secret123'); fill('Confirm password', 'secret123');
     fill('Mother name?', 'a'); fill('First school?', 'b'); fill('Birth city?', 'c');
     fireEvent.click(screen.getByRole('button', { name: 'Create account' }));
     expect(screen.getByRole('dialog')).toBeInTheDocument(); expect(mockedApi).toHaveBeenCalledTimes(1);
     fireEvent.click(screen.getByRole('button', { name: 'Confirm registration' }));
     expect(await screen.findByText('Pending approval')).toBeInTheDocument();
-    expect(mockedApi).toHaveBeenLastCalledWith('/auth/register', { method: 'POST', body: expect.objectContaining({ phone: '+255712345678', cardNumber: '1234567812345678' }) });
+    // The card is issued by the server, so no card number is submitted.
+    expect(mockedApi).toHaveBeenLastCalledWith('/auth/register', { method: 'POST', body: expect.objectContaining({ phone: '+255712345678' }) });
+    expect(mockedApi.mock.calls.at(-1)?.[1]).not.toHaveProperty('body.cardNumber');
   });
   it('shows the setup key only when an admin already exists', async () => {
     mockedApi.mockResolvedValue({ firstAdmin: false });

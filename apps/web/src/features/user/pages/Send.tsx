@@ -1,18 +1,19 @@
 import { useLanguage, translate as tr } from '../../../i18n';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { FRAUD } from '@fraud/shared';
+import { ShieldCheck } from 'lucide-react';
+import { DEFAULT_LOCATION, FEES, FRAUD, feeFor, feePercent, totalWithFee } from '@fraud/shared';
 import type { Location, TransactionListItem, TransferResult } from '@fraud/shared';
-import { useSendContext, useTransfer } from '../../../api/me';
+import { useCardLookup, useSendContext, useTransfer } from '../../../api/me';
 import { TopHeader } from '../../../components/layout/TopHeader';
 import { Alert } from '../../../components/ui/Alert';
 import { Button } from '../../../components/ui/Button';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { Input } from '../../../components/ui/Input';
-import { Select } from '../../../components/ui/Select';
 import { Spinner } from '../../../components/ui/Spinner';
 import { Textarea } from '../../../components/ui/Textarea';
 import { formatTsh } from '../../../lib/format';
+import { currentCoordinates } from '../../../lib/geo';
 import { receiptFromResult } from '../../../lib/receipt';
 import { BlockedPanel } from '../components/BlockedPanel';
 import { ReceiptButton } from '../components/ReceiptButton';
@@ -23,12 +24,22 @@ interface Pending {
   danger?: boolean;
 }
 
+const formatCardNumber = (value: string): string =>
+  value
+    .replace(/\D/g, '')
+    .slice(0, 16)
+    .replace(/(.{4})/g, '$1 ')
+    .trim();
+
 export function SendPage() {
   useLanguage();
-  const [receiverId, setReceiverId] = useState('');
-  const context = useSendContext(receiverId ? Number(receiverId) : undefined);
+  const [cardNumber, setCardNumber] = useState('');
+  const digits = cardNumber.replace(/\D/g, '');
+  // The typed card number resolves to the recipient; nothing else picks a receiver any more.
+  const lookup = useCardLookup(cardNumber);
+  const holder = lookup.data ?? null;
+  const context = useSendContext(holder?.id);
   const transfer = useTransfer();
-  const [location, setLocation] = useState<Location | ''>('');
   const [amount, setAmount] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -36,20 +47,20 @@ export function SendPage() {
   const [receipt, setReceipt] = useState<TransactionListItem | null>(null);
   const [confirmQueue, setConfirmQueue] = useState<Pending[]>([]);
 
-  useEffect(() => {
-    if (!location && context.data) setLocation(context.data.defaultLocation);
-  }, [context.data, location]);
-
   const ctx = context.data;
+  const amountValue = Number(amount);
+  const fee = feeFor(amountValue, FEES.TRANSFER_RATE);
+  const total = totalWithFee(amountValue, FEES.TRANSFER_RATE);
 
   /** The original page's pre-checks, as a chain of in-app confirmations instead of alert/confirm. */
   function preChecks(): Pending[] | string {
     if (!ctx) return 'Please wait for the page to load';
     const value = Number(amount);
-    if (!receiverId) return 'Please select a receiver';
+    if (digits.length !== 16) return 'Enter the 16-digit card number';
+    if (!holder) return 'No account found for that card number';
     if (!Number.isFinite(value) || value <= 0) return 'Please enter a valid amount greater than 0';
-    if (value > ctx.balance)
-      return `Insufficient balance. Your balance is ${formatTsh(ctx.balance)}`;
+    if (totalWithFee(value, FEES.TRANSFER_RATE) > ctx.balance)
+      return `Insufficient balance. Your balance is ${formatTsh(ctx.balance)} (amount ${formatTsh(value)} + fee ${formatTsh(feeFor(value, FEES.TRANSFER_RATE))})`;
 
     const queue: Pending[] = [];
     const { largeVolume, receivers, senders } = ctx;
@@ -89,7 +100,7 @@ export function SendPage() {
     }
     queue.push({
       title: 'Confirm transfer',
-      body: `You are about to send ${formatTsh(value)} to the selected recipient. Continue?`,
+      body: `You are about to send ${formatTsh(value)} to ${holder.fullName} (card •••• ${holder.cardLast4}). Continue?`,
     });
     return queue;
   }
@@ -105,28 +116,29 @@ export function SendPage() {
     setConfirmQueue(checks);
   }
 
-  function onConfirm() {
+  async function onConfirm() {
     const [, ...rest] = confirmQueue;
     if (rest.length > 0) {
       setConfirmQueue(rest);
       return;
     }
     setConfirmQueue([]);
+    // Silent geolocation: the API maps the reading to a city and falls back to the last known one.
+    const coordinates = await currentCoordinates();
     // The form clears on success, so keep what was submitted for the receipt.
     const submitted = {
       direction: 'sent' as const,
       amount: Number(amount),
-      counterpartyName:
-        context.data?.recipients.find((r) => r.id === Number(receiverId))?.fullName ?? null,
-      location: location as Location,
+      counterpartyName: holder?.fullName ?? null,
+      location: (ctx?.defaultLocation ?? DEFAULT_LOCATION) as Location,
       message,
     };
     setReceipt(null);
     transfer.mutate(
       {
-        receiverId: Number(receiverId),
+        cardNumber: digits,
         amount: Number(amount),
-        location: location as Location,
+        coordinates,
         message: message || undefined,
       },
       {
@@ -136,7 +148,7 @@ export function SendPage() {
             setReceipt(receiptFromResult(r, submitted));
             setAmount('');
             setMessage('');
-            setReceiverId('');
+            setCardNumber('');
           }
         },
         onError: (err) => setError(err.message),
@@ -147,7 +159,7 @@ export function SendPage() {
   function reset() {
     setAmount('');
     setMessage('');
-    setReceiverId('');
+    setCardNumber('');
     setError('');
   }
 
@@ -212,32 +224,36 @@ export function SendPage() {
 
         {ctx && !blocked && (
           <form onSubmit={onSubmit} className="flex flex-col gap-4">
-            <Select
-              label={tr('Select Receiver *')}
-              value={receiverId}
-              onChange={(e) => setReceiverId(e.target.value)}
+            <Input
+              label={tr('Recipient card number *')}
+              inputMode="numeric"
+              autoComplete="off"
+              maxLength={19}
+              value={cardNumber}
+              onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+              placeholder={tr('44•• •••• •••• ••••')}
+              hint={tr('Enter the 16-digit card number of the person you are paying')}
               required
-            >
-              <option value="">{tr('-- Select a user --')}</option>
-              {ctx.recipients.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.fullName} - {r.email}
-                </option>
-              ))}
-            </Select>
-            <Select
-              label={tr('Transaction Location *')}
-              value={location}
-              onChange={(e) => setLocation(e.target.value as Location)}
-              hint={tr('Select your current location for fraud detection')}
-              required
-            >
-              {ctx.locations.map((l) => (
-                <option key={l} value={l}>
-                  {l}
-                </option>
-              ))}
-            </Select>
+            />
+            {digits.length === 16 && (
+              <div className="rounded-[10px] border border-p-border bg-p-bg px-3.5 py-3 text-sm">
+                {lookup.isFetching ? (
+                  <span className="text-p-muted">{tr('Looking up the card holder…')}</span>
+                ) : holder ? (
+                  <span className="flex items-center gap-2">
+                    <ShieldCheck size={16} className="text-ok" aria-hidden="true" />
+                    <span>
+                      {tr('Paying')} <strong>{holder.fullName}</strong>{' '}
+                      <span className="tabular font-mono text-xs text-p-muted">•••• {holder.cardLast4}</span>
+                    </span>
+                  </span>
+                ) : (
+                  <span className="text-p-danger">
+                    {tr(lookup.error instanceof Error ? lookup.error.message : 'No account found for that card number')}
+                  </span>
+                )}
+              </div>
+            )}
             <Input
               label={tr('Amount (TSh) *')}
               type="number"
@@ -249,6 +265,16 @@ export function SendPage() {
               hint={tr(`Available balance: ${formatTsh(ctx.balance)}`)}
               required
             />
+            {amountValue > 0 && (
+              <div className="flex items-center justify-between rounded-[10px] border border-p-border bg-p-bg px-3.5 py-2.5 text-xs">
+                <span className="text-p-muted">
+                  {tr(`Fee (${feePercent(FEES.TRANSFER_RATE)})`)}
+                </span>
+                <span className="tabular text-p-dark">
+                  {formatTsh(fee)} · {tr('Total')} <strong>{formatTsh(total)}</strong>
+                </span>
+              </div>
+            )}
             <Textarea
               label={tr('Message (Optional)')}
               rows={3}

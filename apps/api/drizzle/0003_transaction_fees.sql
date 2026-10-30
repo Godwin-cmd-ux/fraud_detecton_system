@@ -1,0 +1,1 @@
+ALTER TABLE "transactions" ADD COLUMN "fee" numeric(15, 2) DEFAULT '0' NOT NULL;

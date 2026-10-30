@@ -3,6 +3,7 @@ import type { Request } from 'express';
 import { z } from 'zod';
 import {
   FRAUD,
+  cardLookupQuerySchema,
   changePasswordSchema,
   transferSchema,
   userTransactionsQuerySchema,
@@ -10,6 +11,7 @@ import {
   withdrawalSchema,
 } from '@fraud/shared';
 import type {
+  CardLookupQuery,
   ChangePasswordInput,
   TransferInput,
   UserTransactionsQuery,
@@ -23,7 +25,7 @@ import { executeTransfer } from '../../modules/transactions/transfer';
 import { executeWithdrawal } from '../../modules/transactions/withdrawal';
 import { getSendContext, getWithdrawContext } from '../../modules/users/context';
 import { getDashboard } from '../../modules/users/dashboard';
-import { findActiveUserById } from '../../modules/users/repo';
+import { findActiveUserById, findUserByCard } from '../../modules/users/repo';
 import { listUserTransactions } from '../../modules/users/transactions';
 import { clientIp, principalOf, requireUser } from '../middleware/auth';
 import { sessionRateLimit } from '../middleware/rateLimit';
@@ -123,6 +125,25 @@ export function meRoutes(deps: AppDeps): Router {
     delete req.session.transactionsUnlockedUntil;
     res.status(204).end();
   });
+
+  /** Resolves a typed card number to the holder's name, so the sender can confirm before paying. */
+  r.get(
+    '/card-lookup',
+    sessionRateLimit('cardlookup', 20, minutes(1), deps.now),
+    validate(cardLookupQuerySchema, 'query'),
+    async (req, res, next) => {
+      try {
+        const { cardNumber } = res.locals.query as CardLookupQuery;
+        const holder = await findUserByCard(deps.db, cardNumber);
+        if (!holder || !holder.isApproved || holder.id === principalOf(req).id) {
+          throw new HttpError(404, 'NOT_FOUND', 'No account found for that card number');
+        }
+        res.json({ id: holder.id, fullName: holder.fullName, cardLast4: holder.cardNumber.slice(-4) });
+      } catch (e) {
+        next(e);
+      }
+    },
+  );
 
   r.get('/send/context', validate(sendContextQuery, 'query'), async (req, res, next) => {
     try {

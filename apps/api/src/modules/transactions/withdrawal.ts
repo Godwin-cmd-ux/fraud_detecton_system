@@ -1,6 +1,7 @@
-import { FRAUD } from '@fraud/shared';
-import type { Location, WithdrawalResult } from '@fraud/shared';
+import { FEES, FRAUD, feeFor, totalWithFee } from '@fraud/shared';
+import type { Coordinates, Location, WithdrawalResult } from '@fraud/shared';
 import { HttpError, ValidationError } from '../../lib/errors';
+import { resolveLocation, storedLocation } from '../../lib/geo';
 import { newTransactionId } from '../../lib/ids';
 import { formatTsh, num } from '../../lib/money';
 import { hourInDar } from '../../lib/time';
@@ -26,7 +27,11 @@ import type { TransferDeps } from './transfer';
 export interface WithdrawalCommand {
   userId: number;
   amount: number;
-  location: Location;
+  /** 1.1% of `amount`, charged to the customer; set by `executeWithdrawal`. */
+  fee?: number;
+  /** Explicit city, for channels without geolocation. The web app sends `coordinates` instead. */
+  location?: Location;
+  coordinates?: Coordinates;
   message?: string;
   ip: string | null;
   userAgent: string | null;
@@ -36,7 +41,7 @@ export const WITHDRAWAL_LOCKED_TEXT =
   '❌ WITHDRAWAL BLOCKED\n\nYour withdrawals are temporarily blocked due to multiple consecutive failed withdrawal attempts.\nPlease contact support to unblock your account.';
 export const INSUFFICIENT_TEXT = 'Insufficient balance. Please try a lower amount.';
 
-function baseRow(c: WithdrawalCommand, user: UserRow, now: Date): NewTransaction {
+function baseRow(c: WithdrawalCommand, user: UserRow, now: Date, location: Location): NewTransaction {
   return {
     transactionId: newTransactionId(now),
     senderId: user.id,
@@ -44,6 +49,7 @@ function baseRow(c: WithdrawalCommand, user: UserRow, now: Date): NewTransaction
     senderName: user.fullName,
     receiverName: null,
     amount: c.amount,
+    fee: c.fee,
     transactionType: 'withdrawal',
     status: 'ABORTED',
     message: null,
@@ -53,7 +59,11 @@ function baseRow(c: WithdrawalCommand, user: UserRow, now: Date): NewTransaction
     predictionTime: null,
     modelVersion: null,
     featureData: null,
-    transactionLocation: c.location,
+    transactionLocation: location,
+    ...(c.coordinates && {
+      txLat: c.coordinates.latitude.toFixed(6),
+      txLng: c.coordinates.longitude.toFixed(6),
+    }),
     ipAddress: c.ip,
     userAgent: c.userAgent,
     adminId: null,
@@ -65,7 +75,12 @@ export async function executeWithdrawal(d: TransferDeps, c: WithdrawalCommand): 
   const user = await findActiveUserById(d.db, c.userId);
   if (!user) throw new HttpError(401, 'UNAUTHENTICATED', 'Your account is no longer active');
   const message = c.message ?? '';
-  const row = baseRow(c, user, now);
+  // Coordinates when the app has them, the explicit city next (USSD), the stored one last.
+  const location = resolveLocation(c.coordinates, c.location ?? storedLocation(user.lastKnownLocation));
+  // Revenue: the customer pays 1.1% on top of the cash withdrawn.
+  const fee = feeFor(c.amount, FEES.WITHDRAWAL_RATE);
+  const total = totalWithFee(c.amount, FEES.WITHDRAWAL_RATE);
+  const row = baseRow({ ...c, fee }, user, now, location);
 
   // 1. Lockout after three consecutive failed attempts (stale counters reset inside).
   const failedCount = await getFailedWithdrawalCount(d.db, user.id, now);
@@ -94,7 +109,7 @@ export async function executeWithdrawal(d: TransferDeps, c: WithdrawalCommand): 
   }
 
   // 2. Location score (no warning text on withdrawals).
-  const change = await getLocationChange(d.db, { userId: user.id, newLocation: c.location, now });
+  const change = await getLocationChange(d.db, { userId: user.id, newLocation: location, now });
   const locScore = locationScore(change);
 
   // 3. Validation; an insufficient balance is a recorded failed attempt.
@@ -104,7 +119,7 @@ export async function executeWithdrawal(d: TransferDeps, c: WithdrawalCommand): 
   else if (c.amount < FRAUD.MIN_WITHDRAWAL) errors.push('Minimum withdrawal amount is TSh 1,000');
   if (errors.length) throw new ValidationError(errors);
 
-  if (c.amount > balance) {
+  if (total > balance) {
     return d.db.transaction(async (tx) => {
       const n = await incrementFailedWithdrawal(tx, user.id, now);
       await insertTransaction(tx, {
@@ -157,16 +172,16 @@ export async function executeWithdrawal(d: TransferDeps, c: WithdrawalCommand): 
     }
 
     await resetFailedWithdrawals(tx, user.id);
-    if (!(await debitBalance(tx, user.id, c.amount))) {
+    if (!(await debitBalance(tx, user.id, total))) {
       throw new HttpError(409, 'DEBIT_FAILED', 'Failed to process withdrawal');
     }
-    await updateUserLocation(tx, user.id, c.location);
+    await updateUserLocation(tx, user.id, location, c.coordinates);
     const inserted = await insertTransaction(tx, { ...scored, status: 'SUCCESS', message: message || null });
     return {
       outcome: 'success',
       message: `Withdrawal successful! You withdrew ${formatTsh(c.amount)}`,
       transactionId: inserted.transactionId,
-      newBalance: Math.round((balance - c.amount) * 100) / 100,
+      newBalance: Math.round((balance - total) * 100) / 100,
       riskScore: outcome.fraudScore,
       riskLevel: outcome.riskLevel,
       fraudPrediction: outcome.fraudPrediction,

@@ -13,6 +13,8 @@ export interface NewTransaction {
   senderName: string | null;
   receiverName: string | null;
   amount: number;
+  /** Revenue charged on this movement; defaults to nothing. */
+  fee?: number;
   transactionType: TransactionType;
   status: TransactionStatus;
   message: string | null;
@@ -23,6 +25,9 @@ export interface NewTransaction {
   modelVersion: string | null;
   featureData: Record<string, unknown> | null;
   transactionLocation: string | null;
+  /** Raw reading behind `transactionLocation`, when the channel reported one. */
+  txLat?: string | null;
+  txLng?: string | null;
   ipAddress: string | null;
   userAgent: string | null;
   adminId: number | null;
@@ -53,7 +58,13 @@ export async function insertTransaction(
       const row = await tx.transaction(async (sp) => {
         const [inserted] = await sp
           .insert(transactions)
-          .values({ ...t, transactionId, amount: money(t.amount), fraudScore: money(t.fraudScore) })
+          .values({
+            ...t,
+            transactionId,
+            amount: money(t.amount),
+            fee: money(t.fee ?? 0),
+            fraudScore: money(t.fraudScore),
+          })
           .returning({ id: transactions.id, createdAt: transactions.createdAt });
         return inserted!;
       });

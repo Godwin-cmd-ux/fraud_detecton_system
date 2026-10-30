@@ -39,6 +39,19 @@ export const cardNumberSchema = z
   .transform(stripSpaces)
   .pipe(z.string().regex(/^[0-9]{16,20}$/, 'Card number must be 16-20 digits'));
 
+/** Virtual cards issued by the system: 16 digits, always starting with 44. */
+export const virtualCardSchema = z
+  .string()
+  .transform(stripSpaces)
+  .pipe(z.string().regex(/^44[0-9]{14}$/, 'Enter the 16-digit card number (starts with 44)'));
+
+/** Browser geolocation, captured silently when a form is submitted. */
+export const coordinatesSchema = z.object({
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+});
+export type Coordinates = z.infer<typeof coordinatesSchema>;
+
 /** Security-question answers keyed by question key; at least three must be non-empty. */
 export const answersSchema = z
   .record(z.string(), z.string())

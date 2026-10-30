@@ -13,7 +13,7 @@ export interface UserDashboard {
     fullName: string;
     email: string;
     phone: string;
-    cardLast4: string;
+    card: { number: string; expiry: string | null; cvc: string | null };
     location: string | null;
     createdAt: string;
   };
@@ -57,7 +57,7 @@ export async function getDashboard(db: Db, userId: number, revealBalance: boolea
       fullName: user.fullName,
       email: user.email,
       phone: user.phone,
-      cardLast4: user.cardNumber.slice(-4),
+      card: { number: user.cardNumber, expiry: user.cardExpiry, cvc: user.cardCvc },
       location: user.lastKnownLocation,
       createdAt: user.createdAt.toISOString(),
     },

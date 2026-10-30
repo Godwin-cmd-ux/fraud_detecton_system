@@ -17,7 +17,8 @@ export const registerSchema = z
     phone: phoneSchema,
     password: passwordMin6,
     confirmPassword: z.string(),
-    cardNumber: cardNumberSchema,
+    /** Optional: the server issues a virtual card, and accepts one here for older clients. */
+    cardNumber: cardNumberSchema.optional(),
     answers: answersSchema,
   })
   .refine((d) => d.password === d.confirmPassword, {

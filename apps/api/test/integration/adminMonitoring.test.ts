@@ -59,6 +59,9 @@ describe('counters and dashboard', () => {
       successful: 4,
       aborted: 4,
       moneyMoved: 6300,
+      // Fixture rows carry no fee, so no revenue has been earned in this data set.
+      revenueToday: 0,
+      revenueTotal: 0,
       fraudDetected: 3,
       highRisk: 2,
       reviewQueue: 1,
@@ -67,6 +70,18 @@ describe('counters and dashboard', () => {
     expect(res.body.recentTransactions).toHaveLength(8);
     expect(res.body.recentTransactions[0]).toMatchObject({ type: 'bonus', senderName: null, receiverName: 'Amina Hassan' });
     expect(res.body.recentUsers.map((u: { fullName: string }) => u.fullName)).toEqual(['Amina Hassan', 'Pending Person', 'Baraka Mushi']);
+  });
+
+  it('reports fees from successful movements as revenue', async () => {
+    const now = new Date();
+    await insertTx(t.db, { amount: 100_000, fee: 800, status: 'SUCCESS', transactionType: 'transfer', createdAt: now });
+    await insertTx(t.db, { amount: 90_000, fee: 990, status: 'SUCCESS', transactionType: 'withdrawal', createdAt: now });
+    // A blocked transfer carries its fee on the row but must never count as revenue.
+    await insertTx(t.db, { amount: 50_000, fee: 400, status: 'ABORTED', transactionType: 'transfer', createdAt: now });
+
+    const res = await agent.get('/api/admin/dashboard');
+    expect(res.body.kpis.revenueToday).toBe(1_790);
+    expect(res.body.kpis.revenueTotal).toBe(1_790);
   });
 });
 

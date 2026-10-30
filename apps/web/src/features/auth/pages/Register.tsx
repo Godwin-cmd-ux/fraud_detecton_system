@@ -7,7 +7,6 @@ import {
   ArrowRight,
   Check,
   CircleCheck,
-  CreditCard,
   Lock,
   Mail,
   Phone,
@@ -32,7 +31,8 @@ import { SecurityQuestionsFields } from '../components/SecurityQuestionsFields';
 /** Live preview of the card being registered; digits fill in as they are typed. */
 function CardPreview({ name, number }: { name: string; number: string }) {
   useLanguage();
-  const digits = number.replace(/\D/g, '').padEnd(16, '•').slice(0, 16);
+  // The card is issued after sign-up, so the preview only promises its shape: 44 + 14 digits.
+  const digits = (number || '44').replace(/\D/g, '').padEnd(16, '•').slice(0, 16);
   const groups = digits.match(/.{4}/g) ?? [];
   return (
     <div className="card-preview" aria-hidden="true">
@@ -125,7 +125,6 @@ export function Register() {
     fullName: '',
     email: '',
     phone: '',
-    cardNumber: '',
     password: '',
     confirmPassword: '',
   });
@@ -165,7 +164,6 @@ export function Register() {
         fullName: '',
         email: '',
         phone: '',
-        cardNumber: '',
         password: '',
         confirmPassword: '',
       });
@@ -181,22 +179,18 @@ export function Register() {
     setForm((previous) => ({ ...previous, [key]: value }));
 
   const detailsDone = Boolean(
-    form.fullName.trim().length >= 3 &&
-    /\S+@\S+\.\S+/.test(form.email) &&
-    form.phone.trim() &&
-    form.cardNumber.replace(/\D/g, '').length >= 12,
+    form.fullName.trim().length >= 3 && /\S+@\S+\.\S+/.test(form.email) && form.phone.trim(),
   );
   const passwordsMatch = Boolean(form.confirmPassword) && form.password === form.confirmPassword;
   const securityDone = form.password.length >= 6 && passwordsMatch;
   const answered = questions.filter(({ key }) => answers[key]?.trim()).length;
   const recoveryDone = answered >= 3;
-  const cardDigits = form.cardNumber.replace(/\D/g, '');
 
   return (
     <AuthForm
       title={tr('Create account')}
       subtitle={tr('Your account will be reviewed by an administrator before you can sign in.')}
-      aside={<RegisterAside name={form.fullName} number={form.cardNumber} />}
+      aside={<RegisterAside name={form.fullName} number="" />}
     >
       {success ? (
         <div role="status" className="reg-success text-center sm:text-left">
@@ -257,32 +251,9 @@ export function Register() {
                     required
                   />
                 </div>
-                <AuthField
-                  name="cardNumber"
-                  label={tr('Card number')}
-                  inputMode="numeric"
-                  autoComplete="cc-number"
-                  icon={<CreditCard size={16} />}
-                  maxLength={24}
-                  placeholder="0000 0000 0000 0000"
-                  value={form.cardNumber}
-                  onChange={(e) =>
-                    change(
-                      'cardNumber',
-                      e.target.value
-                        .replace(/\D/g, '')
-                        .slice(0, 20)
-                        .replace(/(.{4})/g, '$1 ')
-                        .trim(),
-                    )
-                  }
-                  required
-                />
-                {cardDigits && (
-                  <div className="animate-slide-down lg:hidden">
-                    <CardPreview name={form.fullName} number={form.cardNumber} />
-                  </div>
-                )}
+                <p className="text-sm text-s-dim">
+                  {tr('We issue your virtual card (16 digits, starting 44) once the account is created.')}
+                </p>
               </Section>
 
               <Section index={2} title="Sign-in security" done={securityDone}>
@@ -367,7 +338,6 @@ export function Register() {
                   ['Full name', form.fullName],
                   ['Email', form.email],
                   ['Phone number', form.phone],
-                  ['Card number', `•••• ${cardDigits.slice(-4)}`],
                 ].map(([label, value]) => (
                   <div key={label} className="min-w-0">
                     <dt className="text-[11px] tracking-[0.08em] text-s-dim uppercase">
@@ -377,6 +347,9 @@ export function Register() {
                   </div>
                 ))}
               </dl>
+              <p className="mb-4 text-sm text-s-dim">
+                {tr('Your virtual card is issued automatically and shown on your dashboard.')}
+              </p>
               <div className="flex flex-wrap gap-3">
                 <button
                   type="button"

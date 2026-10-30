@@ -1,5 +1,5 @@
 import { and, asc, eq, ne, or, sql } from 'drizzle-orm';
-import type { Location } from '@fraud/shared';
+import type { Coordinates, Location } from '@fraud/shared';
 import type { Db } from '../../db/client';
 import { users } from '../../db/schema';
 
@@ -34,6 +34,16 @@ export async function findUserByLogin(db: Db, login: string): Promise<UserRow | 
   return row ?? null;
 }
 
+/** Active account holding this virtual card number; `null` when no one does. */
+export async function findUserByCard(db: Db, cardNumber: string): Promise<UserRow | null> {
+  const [row] = await db
+    .select()
+    .from(users)
+    .where(and(eq(users.cardNumber, cardNumber), eq(users.isActive, true)))
+    .limit(1);
+  return row ?? null;
+}
+
 export interface Recipient {
   id: number;
   fullName: string;
@@ -50,9 +60,25 @@ export async function listRecipients(db: Db, excludeId: number): Promise<Recipie
     .orderBy(asc(users.fullName));
 }
 
-export async function updateUserLocation(tx: Db, userId: number, location: Location): Promise<void> {
+/**
+ * Records where the customer transacted. The city keeps every existing fraud rule working; the raw
+ * coordinates are kept alongside as evidence when the channel provided them.
+ */
+export async function updateUserLocation(
+  tx: Db,
+  userId: number,
+  location: Location,
+  coordinates?: Coordinates,
+): Promise<void> {
   await tx
     .update(users)
-    .set({ lastKnownLocation: location, locationUpdatedAt: sql`now()` })
+    .set({
+      lastKnownLocation: location,
+      locationUpdatedAt: sql`now()`,
+      ...(coordinates && {
+        lastLat: coordinates.latitude.toFixed(6),
+        lastLng: coordinates.longitude.toFixed(6),
+      }),
+    })
     .where(eq(users.id, userId));
 }

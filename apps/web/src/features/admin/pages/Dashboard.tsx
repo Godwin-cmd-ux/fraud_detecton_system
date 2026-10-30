@@ -60,6 +60,13 @@ export function AdminDashboardPage() {
           tone="amber"
         />
         <StatCard
+          label={tr('Revenue Today')}
+          value={formatTsh(kpis.revenueToday)}
+          sub={tr(`Fees collected · ${formatTsh(kpis.revenueTotal)} all time`)}
+          icon="trend"
+          tone="green"
+        />
+        <StatCard
           label={tr('Fraud Detected')}
           icon="fraud"
           value={kpis.fraudDetected}

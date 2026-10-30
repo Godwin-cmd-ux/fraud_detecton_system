@@ -78,7 +78,7 @@ describe('USSD callback endpoint', () => {
     await f('1');
     await f('Zawadi Mwinyi');
     await f('zawadi.ussd@test.local');
-    await f('5555444433331111');
+    // No card screen: the server issues the card.
     await f('1234');
     await f('1234');
     const review = await f();
@@ -131,7 +131,8 @@ describe('customer dashboard', () => {
     expect(done.text).toContain('Sent TSh 50,000');
     expect(done.text).toContain('TXN');
 
-    expect(await balanceOf(sender.id)).toBe(950_000);
+    // 1,000,000 - 50,000 - 0.8% fee (400.00).
+    expect(await balanceOf(sender.id)).toBe(949_600);
     expect(await balanceOf(receiver.id)).toBe(50_000);
 
     const [tx] = await t.db.select().from(transactions).where(eq(transactions.senderId, sender.id));
@@ -219,7 +220,7 @@ describe('administrator dashboard', () => {
     await f('Neema Joseph');
     await f('neema.ussd@test.local');
     await f(phoneFor(15));
-    await f('4556737586899855');
+    // No card screen: the server issues the card.
     await f('10000');
     await f('1'); // approve immediately
     await f('1'); // set admin PIN
@@ -290,7 +291,8 @@ describe('security', () => {
     // The gateway may retry the final callback; it must not credit the receiver twice.
     const replay = await post(session, sender.phone, `2*${receiver.phone}*25000*1111`);
     expect(replay.text).toBe(done.text);
-    expect(await balanceOf(sender.id)).toBe(975_000);
+    // 1,000,000 - 25,000 - 0.8% fee (200.00).
+    expect(await balanceOf(sender.id)).toBe(974_800);
     expect(await balanceOf(receiver.id)).toBe(25_000);
   });
 

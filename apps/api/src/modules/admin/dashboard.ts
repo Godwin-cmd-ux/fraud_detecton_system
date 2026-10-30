@@ -1,4 +1,5 @@
 import { desc, sql } from 'drizzle-orm';
+import { TIMEZONE } from '@fraud/shared';
 import type { AdminUserRow } from '@fraud/shared';
 import type { Db } from '../../db/client';
 import { transactions, users } from '../../db/schema';
@@ -16,6 +17,9 @@ export interface AdminDashboard {
     successful: number;
     aborted: number;
     moneyMoved: number;
+    /** Fees earned from successful transfers and withdrawals. */
+    revenueToday: number;
+    revenueTotal: number;
     fraudDetected: number;
     highRisk: number;
     reviewQueue: number;
@@ -26,6 +30,9 @@ export interface AdminDashboard {
 }
 
 export async function getAdminDashboard(db: Db, now: Date): Promise<AdminDashboard> {
+  // Revenue is the fee column on successful rows, bucketed by Dar es Salaam calendar day.
+  const tz = sql.raw(`'${TIMEZONE}'`);
+  const revenueBase = sql`${transactions.fee}`;
   const [[userCount], [tx], counters, alerts, recent, recentUsers] = await Promise.all([
     db.select({ c: sql<number>`count(*)::int` }).from(users),
     db
@@ -34,6 +41,8 @@ export async function getAdminDashboard(db: Db, now: Date): Promise<AdminDashboa
         successful: sql<number>`count(*) filter (where ${transactions.status} = 'SUCCESS')::int`,
         aborted: sql<number>`count(*) filter (where ${transactions.status} = 'ABORTED')::int`,
         moneyMoved: sql<string>`coalesce(sum(${transactions.amount}) filter (where ${transactions.status} = 'SUCCESS'), 0)`,
+        revenueToday: sql<string>`coalesce(sum(${revenueBase}) filter (where ${transactions.status} = 'SUCCESS' and (${transactions.createdAt} at time zone ${tz})::date = (now() at time zone ${tz})::date), 0)`,
+        revenueTotal: sql<string>`coalesce(sum(${revenueBase}) filter (where ${transactions.status} = 'SUCCESS'), 0)`,
         fraudDetected: sql<number>`count(*) filter (where ${transactions.fraudPrediction} = 'FRAUD')::int`,
       })
       .from(transactions),
@@ -49,6 +58,8 @@ export async function getAdminDashboard(db: Db, now: Date): Promise<AdminDashboa
       successful: tx?.successful ?? 0,
       aborted: tx?.aborted ?? 0,
       moneyMoved: num(tx?.moneyMoved),
+      revenueToday: num(tx?.revenueToday),
+      revenueTotal: num(tx?.revenueTotal),
       fraudDetected: tx?.fraudDetected ?? 0,
       highRisk: counters.highRisk,
       reviewQueue: counters.reviewQueue,

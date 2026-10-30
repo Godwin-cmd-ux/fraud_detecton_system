@@ -15,6 +15,20 @@
       "when": 1793352743060,
       "tag": "0001_ussd",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793360726691,
+      "tag": "0002_virtual_cards",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793363263595,
+      "tag": "0003_transaction_fees",
+      "breakpoints": true
     }
   ]
 }

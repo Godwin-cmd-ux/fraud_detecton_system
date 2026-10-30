@@ -22,7 +22,7 @@ export interface UserDashboard {
     fullName: string;
     email: string;
     phone: string;
-    cardLast4: string;
+    card: { number: string; expiry: string | null; cvc: string | null };
     location: string | null;
     createdAt: string;
   };
@@ -47,6 +47,13 @@ export interface Recipient {
   fullName: string;
   email: string;
   phone: string;
+}
+
+/** Holder of a card number typed on the send form. */
+export interface CardHolder {
+  id: number;
+  fullName: string;
+  cardLast4: string;
 }
 
 export interface SendContext {
@@ -122,6 +129,8 @@ export interface AdminDashboard {
     successful: number;
     aborted: number;
     moneyMoved: number;
+    revenueToday: number;
+    revenueTotal: number;
     fraudDetected: number;
     highRisk: number;
     reviewQueue: number;

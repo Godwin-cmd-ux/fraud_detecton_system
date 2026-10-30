@@ -18,10 +18,10 @@ const DEMO_PASSWORD = 'User@123';
 const DEMO_ANSWER = 'test';
 
 const DEMO_USERS = [
-  { fullName: 'Amina Hassan', email: 'amina@example.com', phone: '+255700000001', cardNumber: '4532015112830366', balance: 5_000_000 },
-  { fullName: 'Juma Mwangi', email: 'juma@example.com', phone: '+255700000002', cardNumber: '4916338506082832', balance: 2_500_000 },
-  { fullName: 'Neema Joseph', email: 'neema@example.com', phone: '+255700000003', cardNumber: '4556737586899855', balance: 12_000_000 },
-  { fullName: 'Baraka Mushi', email: 'baraka@example.com', phone: '+255700000004', cardNumber: '4539578763621486', balance: 800_000 },
+  { fullName: 'Amina Hassan', email: 'amina@example.com', phone: '+255700000001', cardNumber: '4400000000000001', balance: 5_000_000 },
+  { fullName: 'Juma Mwangi', email: 'juma@example.com', phone: '+255700000002', cardNumber: '4400000000000002', balance: 2_500_000 },
+  { fullName: 'Neema Joseph', email: 'neema@example.com', phone: '+255700000003', cardNumber: '4400000000000003', balance: 12_000_000 },
+  { fullName: 'Baraka Mushi', email: 'baraka@example.com', phone: '+255700000004', cardNumber: '4400000000000004', balance: 800_000 },
 ];
 
 export interface SeedResult {
@@ -61,6 +61,8 @@ export async function seed(db: Db): Promise<SeedResult> {
         email: u.email,
         phone: u.phone,
         cardNumber: u.cardNumber,
+        cardExpiry: '12/29',
+        cardCvc: '123',
         passwordHash: userHash,
         balance: u.balance.toFixed(2),
         securityAnswers: {

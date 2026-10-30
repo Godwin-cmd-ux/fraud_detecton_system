@@ -51,7 +51,9 @@ describe('POST /api/auth/register', () => {
     expect(u.is_approved).toBe(false);
     expect(u.balance).toBe('0.00');
     expect(u.phone).toBe('+255745000111');
-    expect(u.card_number).toBe('5555444433331111');
+    // The server issues the card: 16 digits, prefix 44, and the client's number is not used.
+    expect(u.card_number).toMatch(/^44\d{14}$/);
+    expect(u.card_number).not.toBe('5555444433331111');
     expect(Object.keys(u.security_answers).sort()).toEqual(['birth_city', 'first_school', 'mother_maiden']);
     expect(u.security_answers.mother_maiden).not.toBe('Mama');
     expect(await bcrypt.compare('Mama', u.security_answers.mother_maiden!)).toBe(true);

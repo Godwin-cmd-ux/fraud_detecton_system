@@ -1,7 +1,7 @@
 import { useLanguage, translate as tr } from '../../../i18n';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { FRAUD } from '@fraud/shared';
+import { DEFAULT_LOCATION, FEES, FRAUD, feeFor, feePercent, totalWithFee } from '@fraud/shared';
 import type { Location, TransactionListItem, WithdrawalResult } from '@fraud/shared';
 import { useWithdraw, useWithdrawContext } from '../../../api/me';
 import { TopHeader } from '../../../components/layout/TopHeader';
@@ -9,10 +9,10 @@ import { Alert } from '../../../components/ui/Alert';
 import { Button } from '../../../components/ui/Button';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { Input } from '../../../components/ui/Input';
-import { Select } from '../../../components/ui/Select';
 import { Spinner } from '../../../components/ui/Spinner';
 import { Textarea } from '../../../components/ui/Textarea';
 import { formatTsh } from '../../../lib/format';
+import { currentCoordinates } from '../../../lib/geo';
 import { receiptFromResult } from '../../../lib/receipt';
 import { BlockedPanel } from '../components/BlockedPanel';
 import { ReceiptButton } from '../components/ReceiptButton';
@@ -23,7 +23,6 @@ export function WithdrawPage() {
   useLanguage();
   const context = useWithdrawContext();
   const withdraw = useWithdraw();
-  const [location, setLocation] = useState<Location | ''>('');
   const [amount, setAmount] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -31,12 +30,10 @@ export function WithdrawPage() {
   const [receipt, setReceipt] = useState<TransactionListItem | null>(null);
   const [confirming, setConfirming] = useState(false);
 
-  useEffect(() => {
-    if (!location && context.data) setLocation(context.data.defaultLocation);
-  }, [context.data, location]);
-
   const ctx = context.data;
   const value = Number(amount);
+  const fee = feeFor(value, FEES.WITHDRAWAL_RATE);
+  const total = totalWithFee(value, FEES.WITHDRAWAL_RATE);
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -48,18 +45,20 @@ export function WithdrawPage() {
     setConfirming(true);
   }
 
-  function onConfirm() {
+  async function onConfirm() {
     setConfirming(false);
+    // Silent geolocation: the API maps the reading to a city and falls back to the last known one.
+    const coordinates = await currentCoordinates();
     // The form clears on success, so keep what was submitted for the receipt.
     const submitted = {
       direction: 'withdrawal' as const,
       amount: value,
-      location: location as Location,
+      location: (ctx?.defaultLocation ?? DEFAULT_LOCATION) as Location,
       message,
     };
     setReceipt(null);
     withdraw.mutate(
-      { amount: value, location: location as Location, message: message || undefined },
+      { amount: value, coordinates, message: message || undefined },
       {
         onSuccess: (r) => {
           setResult(r);
@@ -139,18 +138,6 @@ export function WithdrawPage() {
               </ul>
             </Alert>
             <form onSubmit={onSubmit} className="flex flex-col gap-4">
-              <Select
-                label={tr('Location *')}
-                value={location}
-                onChange={(e) => setLocation(e.target.value as Location)}
-                required
-              >
-                {ctx.locations.map((l) => (
-                  <option key={l} value={l}>
-                    {l}
-                  </option>
-                ))}
-              </Select>
               <Input
                 label={tr('Amount (TSh) *')}
                 type="number"
@@ -162,6 +149,16 @@ export function WithdrawPage() {
                 hint={tr(`Available balance: ${formatTsh(ctx.balance)}`)}
                 required
               />
+              {value > 0 && (
+                <div className="flex items-center justify-between rounded-[10px] border border-p-border bg-p-bg px-3.5 py-2.5 text-xs">
+                  <span className="text-p-muted">
+                    {tr(`Fee (${feePercent(FEES.WITHDRAWAL_RATE)})`)}
+                  </span>
+                  <span className="tabular text-p-dark">
+                    {formatTsh(fee)} · {tr('Total debited')} <strong>{formatTsh(total)}</strong>
+                  </span>
+                </div>
+              )}
               <Textarea
                 label={tr('Reason/Reference (Optional)')}
                 rows={2}

@@ -41,6 +41,9 @@ export const users = pgTable(
     email: varchar('email', { length: 100 }).notNull().unique(),
     phone: varchar('phone', { length: 20 }).notNull().unique(),
     cardNumber: varchar('card_number', { length: 20 }).notNull().unique(),
+    /** Virtual card issued by the system: MM/YY, three years out. */
+    cardExpiry: varchar('card_expiry', { length: 5 }),
+    cardCvc: varchar('card_cvc', { length: 3 }),
     passwordHash: varchar('password_hash', { length: 255 }).notNull(),
     balance: numeric('balance', { precision: 15, scale: 2 }).notNull().default('0'),
     securityAnswers: jsonb('security_answers').$type<Record<string, string>>(),
@@ -49,6 +52,9 @@ export const users = pgTable(
     resetToken: varchar('reset_token', { length: 64 }),
     resetTokenExpiry: timestamp('reset_token_expiry', { withTimezone: true }),
     lastKnownLocation: varchar('last_known_location', { length: 100 }),
+    /** Last raw reading from the browser, kept next to the resolved city. */
+    lastLat: numeric('last_lat', { precision: 9, scale: 6 }),
+    lastLng: numeric('last_lng', { precision: 9, scale: 6 }),
     locationUpdatedAt: timestamp('location_updated_at', { withTimezone: true }),
     /** USSD transaction PIN (bcrypt). Null until the customer enrols one through USSD. */
     transactionPinHash: varchar('transaction_pin_hash', { length: 255 }),
@@ -89,6 +95,8 @@ export const transactions = pgTable(
     senderName: varchar('sender_name', { length: 100 }),
     receiverName: varchar('receiver_name', { length: 100 }),
     amount: numeric('amount', { precision: 15, scale: 2 }).notNull(),
+    /** Revenue earned on this movement; only SUCCESS rows count towards it. */
+    fee: numeric('fee', { precision: 15, scale: 2 }).notNull().default('0'),
     transactionType: transactionTypeEnum('transaction_type').notNull(),
     status: transactionStatusEnum('status').notNull(),
     message: text('message'),
@@ -99,6 +107,8 @@ export const transactions = pgTable(
     modelVersion: varchar('model_version', { length: 20 }),
     featureData: jsonb('feature_data').$type<Record<string, unknown>>(),
     transactionLocation: varchar('transaction_location', { length: 100 }),
+    txLat: numeric('tx_lat', { precision: 9, scale: 6 }),
+    txLng: numeric('tx_lng', { precision: 9, scale: 6 }),
     ipAddress: varchar('ip_address', { length: 45 }),
     userAgent: text('user_agent'),
     adminId: integer('admin_id').references(() => admins.id, { onDelete: 'set null' }),

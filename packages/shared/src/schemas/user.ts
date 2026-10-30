@@ -1,22 +1,39 @@
 import { z } from 'zod';
 import { TRANSACTION_STATUSES } from '../constants';
 import type { FraudPrediction, RiskLevel, TransactionStatus, TransactionType } from '../constants';
-import { amountSchema, locationSchema, pageSchema } from './common';
+import { amountSchema, coordinatesSchema, locationSchema, pageSchema, virtualCardSchema } from './common';
 
-export const transferSchema = z.object({
-  receiverId: z.number().int().positive(),
-  amount: amountSchema,
-  location: locationSchema,
-  message: z.string().trim().max(500).optional(),
-});
+/**
+ * A transfer identifies the recipient by card number (what the web form asks for) or by id (what
+ * USSD and the tests use). `location` is only sent by channels without geolocation; the web app
+ * posts silent `coordinates` instead and the API resolves the city from them.
+ */
+export const transferSchema = z
+  .object({
+    receiverId: z.number().int().positive().optional(),
+    cardNumber: virtualCardSchema.optional(),
+    amount: amountSchema,
+    location: locationSchema.optional(),
+    coordinates: coordinatesSchema.optional(),
+    message: z.string().trim().max(500).optional(),
+  })
+  .refine((d) => d.receiverId !== undefined || d.cardNumber !== undefined, {
+    message: 'Enter the recipient card number',
+    path: ['cardNumber'],
+  });
 export type TransferInput = z.infer<typeof transferSchema>;
 
 export const withdrawalSchema = z.object({
   amount: amountSchema,
-  location: locationSchema,
+  location: locationSchema.optional(),
+  coordinates: coordinatesSchema.optional(),
   message: z.string().trim().max(500).optional(),
 });
 export type WithdrawalInput = z.infer<typeof withdrawalSchema>;
+
+/** Card number typed by the sender to reveal the recipient's name before confirming. */
+export const cardLookupQuerySchema = z.object({ cardNumber: virtualCardSchema });
+export type CardLookupQuery = z.infer<typeof cardLookupQuerySchema>;
 
 export const verifyPasswordSchema = z.object({ password: z.string().min(1) });
 

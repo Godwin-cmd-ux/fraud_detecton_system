@@ -8,7 +8,7 @@ import type {
   WithdrawalResult,
 } from '@fraud/shared';
 import { api, ApiError } from './client';
-import type { SendContext, UserDashboard, UserTransactionsResponse, WithdrawContext } from './types';
+import type { CardHolder, SendContext, UserDashboard, UserTransactionsResponse, WithdrawContext } from './types';
 
 const meKeys = {
   dashboard: ['me', 'dashboard'] as const,
@@ -72,6 +72,18 @@ export function useSendContext(receiverId?: number) {
   return useQuery({
     queryKey: meKeys.sendContext(receiverId),
     queryFn: () => api<SendContext>('me/send/context', { query: { receiverId } }),
+    placeholderData: (prev) => prev,
+  });
+}
+
+/** Looks up the holder of a typed card number; only runs once all 16 digits are in. */
+export function useCardLookup(cardNumber: string) {
+  const digits = cardNumber.replace(/\D/g, '');
+  return useQuery({
+    queryKey: ['me', 'card-lookup', digits] as const,
+    queryFn: () => api<CardHolder>('me/card-lookup', { query: { cardNumber: digits } }),
+    enabled: digits.length === 16,
+    retry: false,
     placeholderData: (prev) => prev,
   });
 }

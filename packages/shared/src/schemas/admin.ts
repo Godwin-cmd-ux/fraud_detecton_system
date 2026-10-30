@@ -20,7 +20,8 @@ export const createUserSchema = z.object({
     .min(0, 'Initial balance cannot be negative')
     .refine((v) => Math.abs(v * 100 - Math.round(v * 100)) < 1e-6, 'At most two decimals')
     .default(0),
-  cardNumber: cardNumberSchema,
+  /** Optional: the server issues a virtual card when this is omitted. */
+  cardNumber: cardNumberSchema.optional(),
   isApproved: z.boolean().default(true),
   answers: answersSchema,
 });

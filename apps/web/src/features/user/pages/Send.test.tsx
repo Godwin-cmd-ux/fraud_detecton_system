@@ -46,9 +46,10 @@ describe('SendPage', () => {
   it('replaces the form with the blocked panel when the transfer is blocked', async () => {
     mockedApi.mockImplementation(async (path: string, init?: { body?: unknown }) => {
       if (path === 'auth/me') return { kind: 'user', id: 1, name: 'Amina Hassan', email: 'a@x' };
+      if (path === 'me/card-lookup') return { id: 2, fullName: 'Baraka Mushi', cardLast4: '0366' };
       if (path === 'me/send/context') return context;
       if (path === 'me/transfers') {
-        expect(init?.body).toMatchObject({ receiverId: 2, amount: 100000, location: 'Dar es Salaam' });
+        expect(init?.body).toMatchObject({ cardNumber: '4400000000000366', amount: 100000 });
         return {
           outcome: 'blocked',
           reason: 'Multiple failed withdrawal attempts detected',
@@ -62,7 +63,9 @@ describe('SendPage', () => {
     });
     show();
     expect(await screen.findByText('Limit is 3 transactions totaling 10,000,000 TSh.')).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('Select Receiver *'), { target: { value: '2' } });
+    fireEvent.change(screen.getByLabelText('Recipient card number *'), { target: { value: '4400000000000366' } });
+    // The typed card resolves to the holder's name, which is what the sender confirms.
+    expect(await screen.findByText('Baraka Mushi')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Amount (TSh) *'), { target: { value: '100000' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send Money' }));
     expect(await screen.findByText(/You are about to send TSh 100,000.00/)).toBeInTheDocument();
@@ -76,6 +79,7 @@ describe('SendPage', () => {
   it('shows the success banner with the review warning', async () => {
     mockedApi.mockImplementation(async (path: string) => {
       if (path === 'auth/me') return { kind: 'user', id: 1, name: 'Amina Hassan', email: 'a@x' };
+      if (path === 'me/card-lookup') return { id: 2, fullName: 'Baraka Mushi', cardLast4: '0366' };
       if (path === 'me/send/context') return context;
       if (path === 'me/transfers') {
         return {
@@ -94,7 +98,8 @@ describe('SendPage', () => {
       throw new Error(`unexpected ${path}`);
     });
     show();
-    fireEvent.change(await screen.findByLabelText('Select Receiver *'), { target: { value: '2' } });
+    fireEvent.change(await screen.findByLabelText('Recipient card number *'), { target: { value: '4400000000000366' } });
+    expect(await screen.findByText('Baraka Mushi')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Amount (TSh) *'), { target: { value: '100000' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send Money' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
@@ -128,11 +133,13 @@ describe('SendPage', () => {
   it('refuses client-side when the amount exceeds the balance', async () => {
     mockedApi.mockImplementation(async (path: string) => {
       if (path === 'auth/me') return { kind: 'user', id: 1, name: 'Amina Hassan', email: 'a@x' };
+      if (path === 'me/card-lookup') return { id: 2, fullName: 'Baraka Mushi', cardLast4: '0366' };
       if (path === 'me/send/context') return context;
       throw new Error(`unexpected ${path}`);
     });
     show();
-    fireEvent.change(await screen.findByLabelText('Select Receiver *'), { target: { value: '2' } });
+    fireEvent.change(await screen.findByLabelText('Recipient card number *'), { target: { value: '4400000000000366' } });
+    expect(await screen.findByText('Baraka Mushi')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Amount (TSh) *'), { target: { value: '6000000' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send Money' }));
     expect(await screen.findByText(/Insufficient balance. Your balance is TSh 5,000,000.00/)).toBeInTheDocument();

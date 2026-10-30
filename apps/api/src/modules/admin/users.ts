@@ -11,6 +11,7 @@ import type {
 } from '@fraud/shared';
 import type { Db } from '../../db/client';
 import { transactions, users } from '../../db/schema';
+import { generateCard } from '../../lib/card';
 import { HttpError } from '../../lib/errors';
 import { newTransactionId } from '../../lib/ids';
 import { formatTsh, num } from '../../lib/money';
@@ -88,7 +89,8 @@ export async function createUser(
   admin: Principal,
   ip: string | null,
 ): Promise<{ id: number; message: string }> {
-  await assertUserUnique(db, input.email, input.phone, input.cardNumber);
+  const card = generateCard();
+  await assertUserUnique(db, input.email, input.phone, card.number);
   const securityAnswers = await hashAnswers(db, input.answers);
   return db.transaction(async (tx) => {
     const [row] = await tx
@@ -97,7 +99,9 @@ export async function createUser(
         fullName: input.fullName,
         email: input.email,
         phone: input.phone,
-        cardNumber: input.cardNumber,
+        cardNumber: card.number,
+        cardExpiry: card.expiry,
+        cardCvc: card.cvc,
         passwordHash: await hashPassword(input.password),
         balance: input.initialBalance.toFixed(2),
         securityAnswers,

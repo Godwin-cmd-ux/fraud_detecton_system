@@ -18,7 +18,7 @@ afterEach(() => {
 });
 
 const dashboard = (balance: number | null): UserDashboard => ({
-  user: { id: 1, fullName: 'Amina Hassan', email: 'amina@example.com', phone: '+255700000001', cardLast4: '0366', location: 'Dar es Salaam', createdAt: '2026-01-01T00:00:00Z' },
+  user: { id: 1, fullName: 'Amina Hassan', email: 'amina@example.com', phone: '+255700000001', card: { number: '4400000000000366', expiry: '12/29', cvc: '123' }, location: 'Dar es Salaam', createdAt: '2026-01-01T00:00:00Z' },
   balance,
   stats: { total: 3, successful: 2, aborted: 1, pending: 0, successRate: 67 },
   fraud: { analyzed: 2, fraud: 1, legit: 1, avgScore: 40, maxScore: 60 },

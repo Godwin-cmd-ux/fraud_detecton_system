@@ -1,5 +1,5 @@
 import { defineScene, choose } from '../machine';
-import { isValidCard, isValidEmail, registerViaUssd } from '../register';
+import { isValidEmail, registerViaUssd } from '../register';
 import { PIN_POLICY, hashPin, isWellFormedPin } from '../pin';
 import bcrypt from 'bcryptjs';
 
@@ -27,7 +27,7 @@ defineScene(
       () => 'WELCOME\n1. Register\n2. About\n0. Exit',
       {
         '1': async () => ({
-          text: 'REGISTER 1/4\nEnter full name\n0. Cancel',
+          text: 'REGISTER 1/3\nEnter full name\n0. Cancel',
           scene: 'guest.reg.name',
           clearData: true,
         }),
@@ -56,10 +56,10 @@ defineScene('guest.blocked', async () => ({
 defineScene(
   'guest.reg.name',
   async (c) => {
-    if (c.input === '') return { text: 'REGISTER 1/4\nEnter full name\n0. Cancel' };
+    if (c.input === '') return { text: 'REGISTER 1/3\nEnter full name\n0. Cancel' };
     if (c.input.trim().length < 3) return { text: 'Name too short.\nEnter full name' };
     return {
-      text: 'REGISTER 2/4\nEnter email address\n0. Cancel',
+      text: 'REGISTER 2/3\nEnter email address\n0. Cancel',
       scene: 'guest.reg.email',
       data: { name: c.input.trim() },
     };
@@ -69,33 +69,20 @@ defineScene(
 defineScene(
   'guest.reg.email',
   async (c) => {
-    const prompt = 'REGISTER 2/4\nEnter email address\n0. Cancel';
+    const prompt = 'REGISTER 2/3\nEnter email address\n0. Cancel';
     if (c.input === '') return { text: prompt };
     if (!isValidEmail(c.input)) return { text: `Invalid email.\n${prompt}` };
+    // The card is issued by the server, so the keypad flow no longer asks for one.
     return {
-      text: 'REGISTER 3/4\nEnter 16-digit card no.\n0. Cancel',
-      scene: 'guest.reg.card',
+      text: `REGISTER 3/3\nSet ${PIN_POLICY.length}-digit PIN\n0. Cancel`,
+      scene: 'guest.reg.pin',
       data: { email: c.input.trim().toLowerCase() },
     };
   },
 );
 
-defineScene(
-  'guest.reg.card',
-  async (c) => {
-    const prompt = 'REGISTER 3/4\nEnter 16-digit card no.\n0. Cancel';
-    if (c.input === '') return { text: prompt };
-    if (!isValidCard(c.input)) return { text: `Card must be 16-20 digits.\n${prompt}` };
-    return {
-      text: `REGISTER 4/4\nSet ${PIN_POLICY.length}-digit PIN\n0. Cancel`,
-      scene: 'guest.reg.pin',
-      data: { card: c.input.replace(/\s+/g, '') },
-    };
-  },
-);
-
 defineScene('guest.reg.pin', async (c) => {
-  const ask = `REGISTER 4/4\nSet ${PIN_POLICY.length}-digit PIN\n0. Cancel`;
+  const ask = `REGISTER 3/3\nSet ${PIN_POLICY.length}-digit PIN\n0. Cancel`;
   if (c.input === '') return { text: ask };
   if (!isWellFormedPin(c.input)) return { text: `PIN must be ${PIN_POLICY.length} digits.\n0. Cancel` };
   return {
@@ -119,7 +106,7 @@ defineScene('guest.reg.pinConfirm', async (c) => {
       data.name ?? '',
       data.email ?? '',
       c.phone,
-      `Card ****${(data.card ?? '').slice(-4)}`,
+      'Card issued on approval',
       '1. Submit  0. Cancel',
     ].join('\n'),
     scene: 'guest.reg.review',
@@ -134,7 +121,6 @@ defineScene('guest.reg.review', async (c) => {
     fullName: data.name ?? '',
     email: data.email ?? '',
     phone: c.phone,
-    cardNumber: data.card ?? '',
     pinHash: data.pinh ?? '',
   });
 

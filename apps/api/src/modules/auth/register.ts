@@ -2,6 +2,7 @@ import { asc, eq, or } from 'drizzle-orm';
 import type { RegisterInput } from '@fraud/shared';
 import type { Db } from '../../db/client';
 import { securityQuestions, users } from '../../db/schema';
+import { generateCard } from '../../lib/card';
 import { HttpError } from '../../lib/errors';
 import { hashPassword } from '../../lib/password';
 
@@ -50,7 +51,10 @@ export async function assertUserUnique(
 }
 
 export async function registerUser(db: Db, input: RegisterInput): Promise<{ id: number }> {
-  await assertUserUnique(db, input.email, input.phone, input.cardNumber);
+  // Every account is issued a card; a number sent by an older client is ignored so cards stay
+  // system-generated and Luhn-valid.
+  const card = generateCard();
+  await assertUserUnique(db, input.email, input.phone, card.number);
   const securityAnswers = await hashAnswers(db, input.answers);
   const [row] = await db
     .insert(users)
@@ -58,7 +62,9 @@ export async function registerUser(db: Db, input: RegisterInput): Promise<{ id: 
       fullName: input.fullName,
       email: input.email,
       phone: input.phone,
-      cardNumber: input.cardNumber,
+      cardNumber: card.number,
+      cardExpiry: card.expiry,
+      cardCvc: card.cvc,
       passwordHash: await hashPassword(input.password),
       balance: '0.00',
       securityAnswers,

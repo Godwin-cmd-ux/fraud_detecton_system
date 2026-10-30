@@ -1,6 +1,8 @@
-import type { Location, RiskLevel, TransferResult } from '@fraud/shared';
+import { FEES, feeFor, totalWithFee } from '@fraud/shared';
+import type { Coordinates, Location, RiskLevel, TransferResult } from '@fraud/shared';
 import type { Db } from '../../db/client';
 import { HttpError, ValidationError } from '../../lib/errors';
+import { resolveLocation, storedLocation } from '../../lib/geo';
 import { newTransactionId } from '../../lib/ids';
 import { formatTsh, num } from '../../lib/money';
 import { hourInDar } from '../../lib/time';
@@ -14,7 +16,7 @@ import { applyTransferRules, isFlaggedForReview } from '../fraud/rules';
 import { getLocationChange, getVelocityContext } from '../fraud/velocity';
 import { notifyTransactionBlocked, notifyTransferReceived, notifyTransferSent } from '../sms/notifications';
 import type { SmsClient } from '../sms/client';
-import { findActiveUserById, findUserById, updateUserLocation } from '../users/repo';
+import { findActiveUserById, findUserByCard, findUserById, updateUserLocation } from '../users/repo';
 import type { UserRow } from '../users/repo';
 import { creditBalance, debitBalance, insertTransaction } from './repo';
 import type { NewTransaction } from './repo';
@@ -29,9 +31,15 @@ export interface TransferDeps {
 
 export interface TransferCommand {
   userId: number;
-  receiverId: number;
+  /** Addressed by id (USSD, tests) or by the recipient's card number (web form). */
+  receiverId?: number;
+  cardNumber?: string;
   amount: number;
-  location: Location;
+  /** 0.8% of `amount`, charged to the sender; set by `executeTransfer`. */
+  fee?: number;
+  /** Explicit city, for channels without geolocation. The web app sends `coordinates` instead. */
+  location?: Location;
+  coordinates?: Coordinates;
   message?: string;
   ip: string | null;
   userAgent: string | null;
@@ -41,14 +49,22 @@ export const BLOCKED_TEXT = (kind: 'Transaction' | 'Withdrawal', reason: string,
   `❌ ${kind} BLOCKED due to fraud detection.\n\nReason: ${reason}\nRisk Score: ${score}%\nRisk Level: ${level}\n\nPlease contact support if you believe this is a mistake.`;
 
 /** Fields shared by every transfer row written by this pipeline. */
-function baseRow(c: TransferCommand, sender: UserRow, receiverName: string, now: Date): NewTransaction {
+function baseRow(
+  location: Location,
+  receiverId: number,
+  c: TransferCommand,
+  sender: UserRow,
+  receiverName: string,
+  now: Date,
+): NewTransaction {
   return {
     transactionId: newTransactionId(now),
     senderId: sender.id,
-    receiverId: c.receiverId,
+    receiverId,
     senderName: sender.fullName,
     receiverName,
     amount: c.amount,
+    fee: c.fee,
     transactionType: 'transfer',
     status: 'ABORTED',
     message: null,
@@ -58,7 +74,11 @@ function baseRow(c: TransferCommand, sender: UserRow, receiverName: string, now:
     predictionTime: null,
     modelVersion: null,
     featureData: null,
-    transactionLocation: c.location,
+    transactionLocation: location,
+    ...(c.coordinates && {
+      txLat: c.coordinates.latitude.toFixed(6),
+      txLng: c.coordinates.longitude.toFixed(6),
+    }),
     ipAddress: c.ip,
     userAgent: c.userAgent,
     adminId: null,
@@ -95,15 +115,32 @@ export async function executeTransfer(d: TransferDeps, c: TransferCommand): Prom
   const sender = await findActiveUserById(d.db, c.userId);
   if (!sender) throw new HttpError(401, 'UNAUTHENTICATED', 'Your account is no longer active');
 
-  const receiverRow = c.receiverId > 0 ? await findUserById(d.db, c.receiverId) : null;
+  // The recipient is whichever account holds the card number typed (web) or the id sent (USSD).
+  const requestedId = c.receiverId && c.receiverId > 0 ? c.receiverId : null;
+  const receiverRow = requestedId
+    ? await findUserById(d.db, requestedId)
+    : c.cardNumber
+      ? await findUserByCard(d.db, c.cardNumber)
+      : null;
+  const receiverId = receiverRow?.id ?? requestedId ?? 0;
+
+  // Silent geolocation: the browser reports coordinates, the rules keep seeing a city. Channels
+  // without a GPS (USSD) send the city itself, and a reading far from every city keeps it.
+  const location = resolveLocation(
+    c.coordinates,
+    c.location ?? storedLocation(sender.lastKnownLocation),
+  );
+  // Revenue: the sender pays 0.8% on top of the amount; the receiver gets the full amount.
+  const fee = feeFor(c.amount, FEES.TRANSFER_RATE);
+  const total = totalWithFee(c.amount, FEES.TRANSFER_RATE);
   const receiverName = receiverRow?.fullName ?? 'Unknown';
   const message = c.message ?? '';
   const ctx: VelocityContext = await getVelocityContext(d.db, {
     senderId: sender.id,
-    receiverId: c.receiverId,
+    receiverId,
     now,
   });
-  const row = baseRow(c, sender, receiverName, now);
+  const row = baseRow(location, receiverId, { ...c, fee }, sender, receiverName, now);
 
   // 1-3. Velocity patterns, first block wins.
   const pattern =
@@ -122,17 +159,20 @@ export async function executeTransfer(d: TransferDeps, c: TransferCommand): Prom
   }
 
   // 4. Location.
-  const change = await getLocationChange(d.db, { userId: sender.id, newLocation: c.location, now });
+  const change = await getLocationChange(d.db, { userId: sender.id, newLocation: location, now });
   const locScore = locationScore(change);
   const warning = locationWarning(change);
 
   // 5. Validation (writes nothing).
   const balance = num(sender.balance);
   const errors: string[] = [];
-  if (c.receiverId <= 0) errors.push('Please select a receiver');
-  if (c.receiverId === sender.id) errors.push('You cannot send money to yourself');
+  if (receiverId <= 0) errors.push('Enter the recipient card number');
+  if (receiverId === sender.id) errors.push('You cannot send money to yourself');
   if (c.amount <= 0) errors.push('Amount must be greater than 0');
-  if (c.amount > balance) errors.push(`Insufficient balance. Your balance is ${formatTsh(balance)}`);
+  if (total > balance)
+    errors.push(
+      `Insufficient balance. Your balance is ${formatTsh(balance)} (amount ${formatTsh(c.amount)} + fee ${formatTsh(fee)})`,
+    );
   const receiver = receiverRow && receiverRow.isActive && receiverRow.isApproved ? receiverRow : null;
   if (!receiver) errors.push('Invalid receiver selected');
   if (errors.length) throw new ValidationError(errors);
@@ -177,18 +217,18 @@ export async function executeTransfer(d: TransferDeps, c: TransferCommand): Prom
       };
     }
 
-    if (!(await debitBalance(tx, sender.id, c.amount))) {
+    if (!(await debitBalance(tx, sender.id, total))) {
       throw new HttpError(409, 'DEBIT_FAILED', 'Failed to deduct balance');
     }
     await creditBalance(tx, receiver!.id, c.amount);
-    await updateUserLocation(tx, sender.id, c.location);
+    await updateUserLocation(tx, sender.id, location, c.coordinates);
     const inserted = await insertTransaction(tx, { ...scored, status: 'SUCCESS', message: message || null });
 
     return {
       outcome: 'success',
       message: `Transaction successful! You sent ${formatTsh(c.amount)} to ${receiver!.fullName}`,
       transactionId: inserted.transactionId,
-      newBalance: Math.round((balance - c.amount) * 100) / 100,
+      newBalance: Math.round((balance - total) * 100) / 100,
       riskScore: outcome.fraudScore,
       riskLevel: outcome.riskLevel,
       fraudPrediction: outcome.fraudPrediction,

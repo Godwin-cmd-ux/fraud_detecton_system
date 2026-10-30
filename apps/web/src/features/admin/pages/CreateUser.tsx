@@ -12,13 +12,6 @@ import { Input } from '../../../components/ui/Input';
 import { Spinner } from '../../../components/ui/Spinner';
 import { Card } from '../../../components/ui/Table';
 
-const groupCard = (v: string) =>
-  v
-    .replace(/\D/g, '')
-    .slice(0, 20)
-    .replace(/(.{4})/g, '$1 ')
-    .trim();
-
 /** Same scoring as the public registration page: six points, Weak / Medium / Strong. */
 export function strengthOf(p: string): { score: number; label: string; color: string } {
   let score = 0;
@@ -39,7 +32,6 @@ const empty = {
   phone: '',
   password: '',
   initialBalance: '0.00',
-  cardNumber: '',
   isApproved: true,
 };
 
@@ -155,15 +147,9 @@ export function CreateUserPage() {
             value={form.initialBalance}
             onChange={(e) => set('initialBalance', e.target.value)}
           />
-          <Input
-            label={tr('Card Number *')}
-            inputMode="numeric"
-            maxLength={24}
-            value={form.cardNumber}
-            onChange={(e) => set('cardNumber', groupCard(e.target.value))}
-            hint={tr('16-20 digits')}
-            required
-          />
+          <p className="text-sm text-p-muted">
+            {tr('A virtual card (16 digits, starting 44) is issued automatically.')}
+          </p>
           <label className="flex items-center gap-2 text-sm font-semibold text-p-text md:col-span-2">
             <input
               type="checkbox"

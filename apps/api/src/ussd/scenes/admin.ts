@@ -589,26 +589,11 @@ defineScene(
     if (!phone) return { text: `Invalid number.\n${prompt}` };
     const existing = await rawUserByPhone(c.db, phone);
     if (existing) return { text: `Number already in use.\n${prompt}` };
+    // The virtual card is issued by the server, so the keypad no longer collects one.
     return {
-      text: 'CREATE USER 4/6\nEnter 16-digit card no.\n0. Cancel',
-      scene: 'admin.create.card',
-      data: { phone },
-    };
-  },
-  'admin',
-);
-
-defineScene(
-  'admin.create.card',
-  async (c) => {
-    const prompt = 'CREATE USER 4/6\nEnter 16-digit card no.\n0. Cancel';
-    if (c.input === '') return { text: prompt };
-    const card = c.input.replace(/\s+/g, '');
-    if (!/^\d{16,20}$/.test(card)) return { text: `Card must be 16-20 digits.\n${prompt}` };
-    return {
-      text: 'CREATE USER 5/6\nOpening balance (TSh)\n0. Cancel',
+      text: 'CREATE USER 4/5\nOpening balance (TSh)\n0. Cancel',
       scene: 'admin.create.amount',
-      data: { card },
+      data: { phone },
     };
   },
   'admin',
@@ -617,12 +602,12 @@ defineScene(
 defineScene(
   'admin.create.amount',
   async (c) => {
-    const prompt = 'CREATE USER 5/6\nOpening balance (TSh)\n0. Cancel';
+    const prompt = 'CREATE USER 4/5\nOpening balance (TSh)\n0. Cancel';
     if (c.input === '') return { text: prompt };
     const value = parseAmountOrZero(c.input);
     if (value === null) return { text: `Invalid amount.\n${prompt}` };
     return {
-      text: 'CREATE USER 6/6\nApprove immediately?\n1. Yes  2. No (pending)\n0. Cancel',
+      text: 'CREATE USER 5/5\nApprove immediately?\n1. Yes  2. No (pending)\n0. Cancel',
       scene: 'admin.create.approve',
       data: { amount: String(value) },
     };
@@ -643,8 +628,8 @@ defineScene(
       data.name ?? '',
       `${data.email ?? ''}`,
       `${data.phone ?? ''}`,
-      `Card ****${(data.card ?? '').slice(-4)}`,
       `Open ${money(Number(data.amount ?? 0))}`,
+      'Card: issued on creation',
     ].join('\n');
 
     const pin = await readPinState(c.db, 'admin', meAdmin(c).id, c.now);
@@ -699,7 +684,6 @@ defineScene(
         fullName: data.name ?? '',
         email: data.email ?? '',
         phone: data.phone ?? '',
-        cardNumber: data.card ?? '',
         initialBalance: Number(data.amount ?? 0),
         isApproved: data.approved === '1',
       },

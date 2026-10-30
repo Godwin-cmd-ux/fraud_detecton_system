@@ -51,11 +51,9 @@ it('switches signup language without losing entered data, answers, or refetching
   const question = await screen.findByLabelText("What is your mother's maiden name?");
   fireEvent.change(screen.getByLabelText('Full name'), { target: { value: 'Dashboard' } });
   fireEvent.change(question, { target: { value: 'My private answer' } });
-  fireEvent.change(screen.getByLabelText('Card number'), { target: { value: '1234567890123456' } });
   fireEvent.change(screen.getByRole('combobox', { name: 'Language' }), { target: { value: 'sw' } });
   expect(screen.getByRole('heading', { name: 'Fungua akaunti' })).toBeInTheDocument();
   expect(screen.getByLabelText('Jina kamili')).toHaveValue('Dashboard');
-  expect(screen.getByLabelText('Namba ya kadi')).toHaveValue('1234 5678 9012 3456');
   expect(screen.getByLabelText('Jina la ukoo la mama yako kabla ya kuolewa ni lipi?')).toHaveValue(
     'My private answer',
   );

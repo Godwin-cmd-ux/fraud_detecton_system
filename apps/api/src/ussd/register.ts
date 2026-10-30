@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import type { Principal } from '@fraud/shared';
 import type { Db } from '../db/client';
 import { users } from '../db/schema';
+import { generateCard } from '../lib/card';
 import { HttpError } from '../lib/errors';
 import { money } from '../lib/money';
 import { hashPassword } from '../lib/password';
@@ -38,20 +39,24 @@ export interface UssdRegistrationInput {
   fullName: string;
   email: string;
   phone: string;
-  cardNumber: string;
   /** Already bcrypt-hashed by the PIN enrolment screens. */
   pinHash: string;
+  /** Accepted for older callers; the card is always issued by the server. */
+  cardNumber?: string;
 }
 
 export async function registerViaUssd(db: Db, input: UssdRegistrationInput): Promise<{ id: number }> {
-  await assertUserUnique(db, input.email.trim(), input.phone, input.cardNumber.replace(/\s+/g, ''));
+  const card = generateCard();
+  await assertUserUnique(db, input.email.trim(), input.phone, card.number);
   const [row] = await db
     .insert(users)
     .values({
       fullName: input.fullName.trim(),
       email: input.email.trim().toLowerCase(),
       phone: input.phone,
-      cardNumber: input.cardNumber.replace(/\s+/g, ''),
+      cardNumber: card.number,
+      cardExpiry: card.expiry,
+      cardCvc: card.cvc,
       passwordHash: await hashPassword(initialPasswordFor(input.phone)),
       balance: '0.00',
       securityAnswers: null,
@@ -67,9 +72,10 @@ export interface UssdAdminCreateInput {
   fullName: string;
   email: string;
   phone: string;
-  cardNumber: string;
   initialBalance: number;
   isApproved: boolean;
+  /** Accepted for older callers; the card is always issued by the server. */
+  cardNumber?: string;
 }
 
 /**
@@ -82,7 +88,8 @@ export async function createUserViaUssd(
   admin: Principal,
   ip: string | null,
 ): Promise<{ id: number }> {
-  await assertUserUnique(db, input.email.trim(), input.phone, input.cardNumber.replace(/\s+/g, ''));
+  const card = generateCard();
+  await assertUserUnique(db, input.email.trim(), input.phone, card.number);
   return db.transaction(async (tx) => {
     const [row] = await tx
       .insert(users)
@@ -90,7 +97,9 @@ export async function createUserViaUssd(
         fullName: input.fullName.trim(),
         email: input.email.trim().toLowerCase(),
         phone: input.phone,
-        cardNumber: input.cardNumber.replace(/\s+/g, ''),
+        cardNumber: card.number,
+        cardExpiry: card.expiry,
+        cardCvc: card.cvc,
         passwordHash: await hashPassword(initialPasswordFor(input.phone)),
         balance: money(input.initialBalance),
         securityAnswers: null,
