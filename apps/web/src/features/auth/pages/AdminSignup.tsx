@@ -1,4 +1,5 @@
 import { useLanguage, translate as tr } from '../../../i18n';
+import { KeyRound, Lock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link } from 'react-router';
@@ -133,6 +134,8 @@ export function AdminSignup() {
                 name="password"
                 label={tr('Password')}
                 type="password"
+                icon={<Lock size={16} />}
+                revealable
                 autoComplete="new-password"
                 value={form.password}
                 onChange={(e) => change('password', e.target.value)}
@@ -151,6 +154,8 @@ export function AdminSignup() {
                 name="confirmPassword"
                 label={tr('Confirm password')}
                 type="password"
+                icon={<Lock size={16} />}
+                revealable
                 autoComplete="new-password"
                 value={form.confirmPassword}
                 onChange={(e) => change('confirmPassword', e.target.value)}
@@ -161,6 +166,8 @@ export function AdminSignup() {
                   name="secretKey"
                   label={tr('Admin setup key')}
                   type="password"
+                  icon={<KeyRound size={16} />}
+                  revealable
                   autoComplete="off"
                   value={form.secretKey}
                   onChange={(e) => change('secretKey', e.target.value)}

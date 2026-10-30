@@ -1,4 +1,5 @@
 import { useLanguage, translate as tr } from '../../../i18n';
+import { Lock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useParams } from 'react-router';
@@ -112,6 +113,8 @@ export function ResetPassword() {
               name="password"
               label={tr('New password')}
               type="password"
+              icon={<Lock size={16} />}
+              revealable
               autoComplete="new-password"
               minLength={6}
               value={password}
@@ -124,6 +127,8 @@ export function ResetPassword() {
               name="confirmPassword"
               label={tr('Confirm password')}
               type="password"
+              icon={<Lock size={16} />}
+              revealable
               autoComplete="new-password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
