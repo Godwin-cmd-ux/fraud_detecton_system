@@ -6,7 +6,7 @@ import { ApiError, api } from '../../../api/client';
 import { LanguageSwitcher } from '../../../i18n/LanguageSwitcher';
 import { localizeValidity } from '../../../i18n/validation';
 import { plainText } from '../../../lib/text';
-import { ShieldCheck, ArrowLeft, ArrowUpRight, Fingerprint } from 'lucide-react';
+import { ShieldCheck, ArrowLeft, ArrowUpRight, Fingerprint, Eye, EyeOff } from 'lucide-react';
 
 export const authInputClass =
   'w-full rounded-[10px] border border-s-line bg-s-bg px-3.5 py-3 text-s-text focus:border-s-teal focus:outline-none focus:ring-4 focus:ring-s-teal/10';
@@ -16,10 +16,13 @@ export const authButtonClass =
 export function AuthForm({
   title,
   subtitle,
+  aside,
   children,
 }: {
   title: string;
   subtitle?: string;
+  /** Replaces the default story in the dark side panel. */
+  aside?: ReactNode;
   children: ReactNode;
 }) {
   useLanguage();
@@ -36,18 +39,20 @@ export function AuthForm({
             / {tr('Fraud Detection System')}
           </span>
         </Link>
-        <div className="my-auto py-16">
-          <div className="auth-emblem mb-10">
-            <Fingerprint size={72} strokeWidth={1} />
+        {aside ?? (
+          <div className="my-auto py-16">
+            <div className="auth-emblem mb-10">
+              <Fingerprint size={72} strokeWidth={1} />
+            </div>
+            <p className="eyebrow mb-5 flex">{tr('Built around your wallet')}</p>
+            <h2 className="max-w-md text-5xl leading-[1.08] font-medium tracking-[-0.03em]">
+              {tr('A clearer view of every transaction.')}
+            </h2>
+            <p className="mt-6 max-w-sm text-base leading-relaxed text-white/60">
+              {tr('Secure access to your wallet and fraud monitoring.')}
+            </p>
           </div>
-          <p className="eyebrow mb-5 flex">{tr('Built around your wallet')}</p>
-          <h2 className="max-w-md text-5xl leading-[1.08] font-medium tracking-[-0.03em]">
-            {tr('A clearer view of every transaction.')}
-          </h2>
-          <p className="mt-6 max-w-sm text-base leading-relaxed text-white/60">
-            {tr('Secure access to your wallet and fraud monitoring.')}
-          </p>
-        </div>
+        )}
         <div className="flex items-center justify-between border-t border-white/15 pt-6 text-xs text-white/50">
           <span>{tr('Sentinel · Fraud Detection System')}</span>
           <ArrowUpRight size={16} aria-hidden="true" />
@@ -85,28 +90,65 @@ export function AuthForm({
 
 export function AuthField({
   label,
+  icon,
+  revealable = false,
   ...props
-}: InputHTMLAttributes<HTMLInputElement> & { label: string }) {
+}: InputHTMLAttributes<HTMLInputElement> & {
+  label: string;
+  /** Decorative leading icon. */
+  icon?: ReactNode;
+  /** Adds a show/hide toggle for password fields. */
+  revealable?: boolean;
+}) {
   useLanguage();
+  const [revealed, setRevealed] = useState(false);
   const id = props.id ?? props.name;
+  const type = revealable && revealed ? 'text' : props.type;
   return (
     <div className="space-y-2">
       <label htmlFor={id} className="block text-[13px] font-medium">
         {tr(label)}
       </label>
-      <input
-        {...props}
-        id={id}
-        className={authInputClass}
-        onInvalid={(event) => {
-          localizeValidity(event.currentTarget);
-          props.onInvalid?.(event);
-        }}
-        onInput={(event) => {
-          event.currentTarget.setCustomValidity('');
-          props.onInput?.(event);
-        }}
-      />
+      <div className="auth-input relative">
+        {icon && (
+          <span
+            className="auth-input__icon pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-s-dim"
+            aria-hidden="true"
+          >
+            {icon}
+          </span>
+        )}
+        <input
+          {...props}
+          id={id}
+          type={type}
+          className={`${authInputClass} ${icon ? 'pl-10' : ''} ${revealable ? 'pr-11' : ''}`}
+          onInvalid={(event) => {
+            localizeValidity(event.currentTarget);
+            props.onInvalid?.(event);
+          }}
+          onInput={(event) => {
+            event.currentTarget.setCustomValidity('');
+            props.onInput?.(event);
+          }}
+        />
+        {revealable && (
+          <button
+            type="button"
+            onClick={() => setRevealed((v) => !v)}
+            aria-label={tr(revealed ? 'Hide password' : 'Show password')}
+            aria-pressed={revealed}
+            aria-controls={id}
+            className="absolute top-1/2 right-2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-s-dim transition hover:bg-s-panel2 hover:text-s-text"
+          >
+            {revealed ? (
+              <EyeOff size={16} aria-hidden="true" />
+            ) : (
+              <Eye size={16} aria-hidden="true" />
+            )}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

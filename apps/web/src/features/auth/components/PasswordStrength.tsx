@@ -13,20 +13,42 @@ export function passwordStrength(password: string): number {
 export function PasswordStrength({ password }: { password: string }) {
   useLanguage();
   const score = passwordStrength(password);
-  const label = score <= 2 ? 'Weak' : score <= 4 ? 'Medium' : 'Strong';
   if (!password) return null;
+  const level = score <= 2 ? 0 : score <= 4 ? 1 : 2;
+  const label = ['Weak', 'Medium', 'Strong'][level]!;
+  const color = ['var(--color-s-red)', 'var(--color-s-amber)', 'var(--color-s-teal)'][level];
   return (
-    <div className="space-y-1 text-sm">
+    <div className="animate-slide-down space-y-1.5 text-[13px]">
       <meter
         aria-label={tr('Password strength')}
         min={0}
         max={6}
         value={score}
-        className="w-full"
+        className="sr-only"
       />
-      <p className={score <= 2 ? 'text-s-red' : score <= 4 ? 'text-s-amber' : 'text-s-teal'}>
-        {tr('Password strength: ')}
-        {tr(label)}
+      <div className="grid grid-cols-6 gap-1" aria-hidden="true">
+        {Array.from({ length: 6 }, (_, i) => (
+          <span key={i} className="h-1 overflow-hidden rounded-full bg-s-line">
+            <span
+              className="block h-full rounded-full transition-[transform,background-color] duration-300 ease-out"
+              style={{
+                background: color,
+                transform: `scaleX(${i < score ? 1 : 0})`,
+                transformOrigin: 'left',
+                transitionDelay: `${i * 30}ms`,
+              }}
+            />
+          </span>
+        ))}
+      </div>
+      <p className="flex justify-between gap-3">
+        <span style={{ color }}>
+          {tr('Password strength: ')}
+          {tr(label)}
+        </span>
+        <span className="hidden text-s-dim sm:inline">
+          {tr('Use 8+ characters with a number and a symbol')}
+        </span>
       </p>
     </div>
   );

@@ -71,6 +71,8 @@ export const messages: Record<string, string> = {
     'Akaunti yako imefungwa. Tafadhali subiri dakika {0} kabla ya kujaribu tena.',
   'Received from {0}': 'Imepokelewa kutoka kwa {0}',
   'Sent to {0}': 'Imetumwa kwa {0}',
+  'More actions for {0}': 'Vitendo zaidi kwa {0}',
+  'Showing {0} of {1} users': 'Inaonyesha watumiaji {0} kati ya {1}',
   '{0} analyzed · avg {1}% · Highest: {2}%': '{0} imechambuliwa · wastani {1}% · Juu zaidi: {2}%',
   '{0}% of total': '{0}% ya jumla',
   'Range: {0}% – {1}%': 'Wigo: {0}% – {1}%',

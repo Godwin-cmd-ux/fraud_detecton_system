@@ -58,15 +58,19 @@ export function Td({
   children,
   className = '',
   colSpan,
+  label,
 }: {
   children?: ReactNode;
   className?: string;
   colSpan?: number;
+  /** Column name shown beside the value when a `.table-cards` table collapses to cards. */
+  label?: string;
 }) {
   useLanguage();
   return (
     <td
       colSpan={colSpan}
+      data-label={label ? tr(label) : undefined}
       className={`border-b border-[#eceee8] px-3 py-3.5 align-middle whitespace-nowrap ${className}`}
     >
       {children}

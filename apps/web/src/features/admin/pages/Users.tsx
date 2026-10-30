@@ -1,20 +1,24 @@
 import { useLanguage, translate as tr } from '../../../i18n';
 import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
+import { Eye, Power, Search, Trash2, UserPlus, UserX, Wallet } from 'lucide-react';
 import type { AdminUserRow } from '@fraud/shared';
 import { useAdminUsers, useDeleteUser, useUserAction } from '../../../api/admin';
 import type { UserAction } from '../../../api/admin';
 import { TopHeader } from '../../../components/layout/TopHeader';
 import { Alert } from '../../../components/ui/Alert';
+import { Avatar } from '../../../components/ui/Avatar';
+import { Badge } from '../../../components/ui/Badge';
 import type { AlertKind } from '../../../components/ui/Alert';
 import { Button } from '../../../components/ui/Button';
 import { ConfirmDialog } from '../../../components/ui/ConfirmDialog';
 import { Input } from '../../../components/ui/Input';
 import { Pagination } from '../../../components/ui/Pagination';
+import { RowMenu } from '../../../components/ui/RowMenu';
 import { Spinner } from '../../../components/ui/Spinner';
 import { Card, EmptyState, Table, Td, Th } from '../../../components/ui/Table';
 import { formatDate, formatTsh } from '../../../lib/format';
-import { UserActionButtons, UserViewModal, statusLabel } from '../components/UserViewModal';
+import { UserViewModal, statusLabel } from '../components/UserViewModal';
 
 const ACTION_TEXT: Record<UserAction, { title: (n: string) => string; body: string }> = {
   approve: { title: (n) => `Approve ${n}?`, body: 'The user will be able to sign in.' },
@@ -40,6 +44,7 @@ export function AdminUsersPage() {
   const search = params.get('search') ?? '';
   const page = Number(params.get('page') ?? '1') || 1;
   const [draft, setDraft] = useState(search);
+  const navigate = useNavigate();
   const users = useAdminUsers({ search: search || undefined, page });
   const action = useUserAction();
   const remove = useDeleteUser();
@@ -78,6 +83,15 @@ export function AdminUsersPage() {
       <TopHeader
         title={tr('User Management')}
         subtitle={tr('View and manage all registered users')}
+        actions={
+          <Link
+            to="/admin/users/new"
+            className="inline-flex min-h-10 items-center gap-2 rounded-[10px] bg-p-primary px-4 text-sm font-medium text-white shadow-sm shadow-p-primary/20 transition hover:bg-p-primary-dark active:scale-[0.98]"
+          >
+            <UserPlus size={16} aria-hidden="true" />
+            {tr('Create User')}
+          </Link>
+        }
       />
       {flash && (
         <Alert kind={flash.kind} className="mb-4">
@@ -86,22 +100,40 @@ export function AdminUsersPage() {
       )}
 
       <Card
-        title={tr('All Users')}
+        title={
+          <span className="flex items-center gap-2.5">
+            {tr('All Users')}
+            {users.data && (
+              <span className="tabular rounded-full bg-[#eef0eb] px-2 py-0.5 text-[11px] font-semibold text-p-muted">
+                {users.data.total}
+              </span>
+            )}
+          </span>
+        }
         actions={
           <form
-            className="flex items-end gap-2"
+            role="search"
+            className="flex w-full items-center gap-2 sm:w-auto"
             onSubmit={(e) => {
               e.preventDefault();
               update({ search: draft });
             }}
           >
-            <Input
-              aria-label={tr('Search users')}
-              placeholder={tr('Search name, email or phone')}
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-            />
-            <Button type="submit" size="sm" variant="secondary">
+            <div className="relative flex-1 sm:w-72 sm:flex-none">
+              <Search
+                size={15}
+                className="pointer-events-none absolute top-1/2 left-3 z-10 -translate-y-1/2 text-p-muted"
+                aria-hidden="true"
+              />
+              <Input
+                aria-label={tr('Search users')}
+                placeholder={tr('Search name, email or phone')}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Button type="submit" variant="secondary">
               {tr('Search')}
             </Button>
             {search && (
@@ -119,51 +151,123 @@ export function AdminUsersPage() {
         )}
         {users.data && users.data.items.length > 0 && (
           <>
-            <Table>
+            <Table className="table-cards user-table">
               <thead>
                 <tr>
-                  <Th>{tr('ID')}</Th>
-                  <Th>{tr('Full Name')}</Th>
-                  <Th>{tr('Email')}</Th>
+                  <Th>{tr('User')}</Th>
                   <Th>{tr('Phone')}</Th>
-                  <Th>{tr('Balance')}</Th>
+                  <Th className="text-right">{tr('Balance')}</Th>
                   <Th>{tr('Card')}</Th>
                   <Th>{tr('Status')}</Th>
                   <Th>{tr('Created')}</Th>
-                  <Th>{tr('Actions')}</Th>
+                  <Th className="text-right">{tr('Actions')}</Th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody key={`${search}-${page}`} className="row-stagger">
                 {users.data.items.map((u) => {
                   const s = statusLabel(u);
+                  const primary: UserAction | null = !u.isActive
+                    ? 'activate'
+                    : !u.isApproved
+                      ? 'approve'
+                      : null;
                   return (
                     <tr key={u.id}>
-                      <Td>{u.id}</Td>
-                      <Td className="font-medium">{u.fullName}</Td>
-                      <Td>{u.email}</Td>
-                      <Td>{u.phone}</Td>
-                      <Td className="whitespace-nowrap">{formatTsh(u.balance)}</Td>
-                      <Td className="font-mono text-xs">****{u.cardLast4}</Td>
-                      <Td>
-                        <div className="font-semibold" style={{ color: s.color }}>
-                          {tr(s.text)}
-                        </div>
-                        <div className="text-xs text-p-muted">{tr(s.sub)}</div>
+                      <Td className="cell-user">
+                        <button
+                          type="button"
+                          onClick={() => setViewing(u)}
+                          className="group flex items-center gap-3 text-left"
+                        >
+                          <Avatar name={u.fullName} />
+                          <span className="min-w-0">
+                            <span className="block truncate font-medium text-p-dark group-hover:text-p-primary">
+                              {u.fullName}
+                            </span>
+                            <span className="block truncate text-xs text-p-muted">{u.email}</span>
+                          </span>
+                        </button>
                       </Td>
-                      <Td className="text-p-muted">{formatDate(u.createdAt, 'date')}</Td>
-                      <Td>
-                        <div className="flex flex-wrap gap-1.5">
-                          <UserActionButtons
-                            user={u}
-                            onAction={(a) => setPending({ kind: 'action', action: a, user: u })}
-                            onDelete={() => setPending({ kind: 'delete', user: u })}
-                          />
-                          <Link to={`/admin/users/${u.id}/balance`}>
-                            <Button size="sm">{tr('Add Balance')}</Button>
-                          </Link>
-                          <Button size="sm" variant="ghost" onClick={() => setViewing(u)}>
+                      <Td label="Phone" className="tabular text-p-text">
+                        {u.phone}
+                      </Td>
+                      <Td label="Balance" className="tabular text-right font-medium text-p-dark">
+                        {formatTsh(u.balance)}
+                      </Td>
+                      <Td label="Card" className="font-mono text-xs text-p-muted">
+                        ****{u.cardLast4}
+                      </Td>
+                      <Td className="cell-status">
+                        <span title={tr(s.sub)}>
+                          <Badge tone={s.tone} dot>
+                            {tr(s.text)}
+                          </Badge>
+                        </span>
+                      </Td>
+                      <Td label="Created" className="text-p-muted">
+                        {formatDate(u.createdAt, 'date')}
+                      </Td>
+                      <Td className="cell-actions">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {primary && (
+                            <Button
+                              size="sm"
+                              variant="success"
+                              onClick={() =>
+                                setPending({ kind: 'action', action: primary, user: u })
+                              }
+                            >
+                              {tr(primary === 'approve' ? 'Approve' : 'Activate')}
+                            </Button>
+                          )}
+                          <Button size="sm" variant="secondary" onClick={() => setViewing(u)}>
+                            <Eye size={14} aria-hidden="true" />
                             {tr('View')}
                           </Button>
+                          <RowMenu
+                            label={tr(`More actions for ${u.fullName}`)}
+                            items={[
+                              {
+                                label: 'Add Balance',
+                                icon: <Wallet size={14} />,
+                                onSelect: () => navigate(`/admin/users/${u.id}/balance`),
+                              },
+                              ...(u.isApproved && u.isActive
+                                ? [
+                                    {
+                                      label: 'Disapprove',
+                                      icon: <UserX size={14} />,
+                                      onSelect: () =>
+                                        setPending({
+                                          kind: 'action',
+                                          action: 'disapprove',
+                                          user: u,
+                                        }),
+                                    },
+                                  ]
+                                : []),
+                              ...(u.isActive
+                                ? [
+                                    {
+                                      label: 'Deactivate',
+                                      icon: <Power size={14} />,
+                                      onSelect: () =>
+                                        setPending({
+                                          kind: 'action',
+                                          action: 'deactivate',
+                                          user: u,
+                                        }),
+                                    },
+                                  ]
+                                : []),
+                              {
+                                label: 'Delete',
+                                icon: <Trash2 size={14} />,
+                                danger: true,
+                                onSelect: () => setPending({ kind: 'delete', user: u }),
+                              },
+                            ]}
+                          />
                         </div>
                       </Td>
                     </tr>
@@ -171,7 +275,10 @@ export function AdminUsersPage() {
                 })}
               </tbody>
             </Table>
-            <div className="mt-4">
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+              <span className="tabular text-xs text-p-muted">
+                {tr(`Showing ${users.data.items.length} of ${users.data.total} users`)}
+              </span>
               <Pagination
                 page={users.data.page}
                 totalPages={users.data.totalPages}
