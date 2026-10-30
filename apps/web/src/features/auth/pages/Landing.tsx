@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { formatTsh } from '../../../lib/format';
 import { LanguageSwitcher } from '../../../i18n/LanguageSwitcher';
+import { ShieldCheck } from 'lucide-react';
 
 interface Activity {
   id: number;
@@ -47,25 +48,28 @@ export function Landing() {
     };
   }, []);
   return (
-    <main className="min-h-screen bg-s-bg text-s-text">
+    <main className="landing-page theme-sentinel min-h-screen bg-s-bg text-s-text">
       <nav
         aria-label={tr('Main navigation')}
-        className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-5 px-6 py-6"
+        className="site-nav mx-auto grid max-w-6xl grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-5 py-3"
       >
-        <LanguageSwitcher dark />
-        <Link to="/" className="font-display text-2xl font-bold text-s-teal">
+        <Link to="/" className="site-nav__brand font-display text-xl font-bold text-s-teal">
+          <span className="site-nav__mark" aria-hidden="true">
+            <ShieldCheck size={20} strokeWidth={2.5} />
+          </span>
           {tr('Sentinel')}
         </Link>
-        <div className="flex flex-wrap gap-5 text-sm">
+        <div className="site-nav__links flex items-center justify-self-end text-sm">
           <a href="#how-it-works">{tr('How it works')}</a>
           <a href="#capabilities">{tr('Capabilities')}</a>
           <Link to="/register">{tr('Create account')}</Link>
-          <Link to="/login" className="text-s-teal">
-            {tr('Sign in')}
-          </Link>
         </div>
+        <LanguageSwitcher dark pill />
+        <Link to="/login" className="site-nav__login text-s-teal">
+          {tr('Sign in')}
+        </Link>
       </nav>
-      <section className="mx-auto grid max-w-6xl gap-12 px-6 py-16 lg:grid-cols-2">
+      <section className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-16 lg:grid-cols-2 lg:py-24">
         <div>
           <p className="mb-4 font-mono text-sm uppercase tracking-widest text-s-teal">
             {tr('Fraud Detection System')}
@@ -87,7 +91,7 @@ export function Landing() {
             </Link>
           </div>
         </div>
-        <div className="rounded-2xl border border-s-line bg-s-panel p-6">
+        <div className="screening-panel rounded-2xl border border-s-line bg-s-panel p-6">
           <div className="mb-5 flex justify-between">
             <h2 className="font-semibold">{tr('Transaction screening')}</h2>
             <span className="text-sm text-s-dim">{tr('Illustrative demo')}</span>
@@ -133,7 +137,7 @@ export function Landing() {
               'Combine model risk scores with fraud rules and administrator review.',
             ],
           ].map(([title, body]) => (
-            <article key={title} className="rounded-xl border border-s-line bg-s-panel p-6">
+            <article key={title} className="capability-card rounded-xl border border-s-line bg-s-panel p-6">
               <h3 className="mb-3 text-xl font-semibold">{tr(title)}</h3>
               <p className="text-s-dim">{tr(body)}</p>
             </article>
