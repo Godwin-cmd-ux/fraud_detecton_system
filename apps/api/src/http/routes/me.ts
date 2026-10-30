@@ -3,15 +3,22 @@ import type { Request } from 'express';
 import { z } from 'zod';
 import {
   FRAUD,
+  changePasswordSchema,
   transferSchema,
   userTransactionsQuerySchema,
   verifyPasswordSchema,
   withdrawalSchema,
 } from '@fraud/shared';
-import type { TransferInput, UserTransactionsQuery, WithdrawalInput } from '@fraud/shared';
+import type {
+  ChangePasswordInput,
+  TransferInput,
+  UserTransactionsQuery,
+  WithdrawalInput,
+} from '@fraud/shared';
 import type { AppDeps } from '../app';
 import { HttpError } from '../../lib/errors';
 import { verifyPassword } from '../../lib/password';
+import { changePassword } from '../../modules/auth/changePassword';
 import { executeTransfer } from '../../modules/transactions/transfer';
 import { executeWithdrawal } from '../../modules/transactions/withdrawal';
 import { getSendContext, getWithdrawContext } from '../../modules/users/context';
@@ -68,6 +75,21 @@ export function meRoutes(deps: AppDeps): Router {
         }
         req.session.balanceRevealedUntil = deps.now().getTime() + minutes(FRAUD.BALANCE_REVEAL_TTL_MIN);
         res.json({ ok: true });
+      } catch (e) {
+        next(e);
+      }
+    },
+  );
+
+  r.post(
+    '/password',
+    sessionRateLimit('password', 5, minutes(1), deps.now),
+    validate(changePasswordSchema, 'body'),
+    async (req, res, next) => {
+      try {
+        const { currentPassword, newPassword } = res.locals.body as ChangePasswordInput;
+        await changePassword(deps.db, principalOf(req).id, currentPassword, newPassword);
+        res.status(204).end();
       } catch (e) {
         next(e);
       }

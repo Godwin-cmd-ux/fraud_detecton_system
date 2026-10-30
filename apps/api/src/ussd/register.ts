@@ -1,4 +1,3 @@
-import { randomBytes } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import type { Principal } from '@fraud/shared';
 import type { Db } from '../db/client';
@@ -25,8 +24,15 @@ const CARD_RE = /^\d{16,20}$/;
 export const isValidEmail = (value: string): boolean => EMAIL_RE.test(value.trim());
 export const isValidCard = (value: string): boolean => CARD_RE.test(value.replace(/\s+/g, ''));
 
-export const USSD_PASSWORD_PLACEHOLDER =
-  'Set a web password with Forgot Password before signing in on the website.';
+/**
+ * Initial web password for an account created over USSD.
+ *
+ * The keypad flow cannot collect a password, so the number the customer registered with becomes
+ * the first password for the website, where the dashboard lets them choose a new one. Only the
+ * digits are used so the same secret works whether the number is typed with `+`, spaces or a
+ * leading zero. The login form accepts both spellings.
+ */
+export const initialPasswordFor = (phone: string): string => phone.replace(/\D/g, '');
 
 export interface UssdRegistrationInput {
   fullName: string;
@@ -46,7 +52,7 @@ export async function registerViaUssd(db: Db, input: UssdRegistrationInput): Pro
       email: input.email.trim().toLowerCase(),
       phone: input.phone,
       cardNumber: input.cardNumber.replace(/\s+/g, ''),
-      passwordHash: await hashPassword(`ussd-${randomBytes(24).toString('hex')}`),
+      passwordHash: await hashPassword(initialPasswordFor(input.phone)),
       balance: '0.00',
       securityAnswers: null,
       isApproved: false,
@@ -85,7 +91,7 @@ export async function createUserViaUssd(
         email: input.email.trim().toLowerCase(),
         phone: input.phone,
         cardNumber: input.cardNumber.replace(/\s+/g, ''),
-        passwordHash: await hashPassword(`ussd-${randomBytes(24).toString('hex')}`),
+        passwordHash: await hashPassword(initialPasswordFor(input.phone)),
         balance: money(input.initialBalance),
         securityAnswers: null,
         isApproved: input.isApproved,

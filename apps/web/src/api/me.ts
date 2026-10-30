@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
+  ChangePasswordInput,
   TransferInput,
   TransferResult,
   UserTransactionsQuery,
@@ -34,6 +35,12 @@ export function useVerifyPassword() {
     onSuccess: (r) => {
       if (r.ok) void qc.invalidateQueries({ queryKey: meKeys.dashboard });
     },
+  });
+}
+
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: (input: ChangePasswordInput) => api<void>('me/password', { method: 'POST', body: input }),
   });
 }
 

@@ -14,6 +14,7 @@ import { Spinner } from '../../../components/ui/Spinner';
 import { StatCard, StatGrid } from '../../../components/ui/StatCard';
 import { Card, EmptyState, Table, Td, Th } from '../../../components/ui/Table';
 import { formatDate, formatTsh } from '../../../lib/format';
+import { ChangePasswordCard } from '../components/ChangePasswordCard';
 import { TransactionLabel } from '../components/TransactionDetailsModal';
 
 const MASK = '••••••••••••••••';
@@ -208,6 +209,8 @@ export function UserDashboardPage() {
           </Table>
         )}
       </Card>
+
+      <ChangePasswordCard />
 
       <Modal
         open={askPassword}

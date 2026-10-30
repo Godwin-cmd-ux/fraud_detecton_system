@@ -4,7 +4,7 @@ import type { Principal } from '@fraud/shared';
 import type { Db } from '../../db/client';
 import { admins } from '../../db/schema';
 import { HttpError } from '../../lib/errors';
-import { verifyPassword } from '../../lib/password';
+import { matchesPhonePassword, verifyPassword } from '../../lib/password';
 import { findUserByLogin } from '../users/repo';
 import { getLockout, recordFailure, resetAttempts } from './lockout';
 
@@ -65,7 +65,11 @@ async function adminLogin(db: Db, a: LoginArgs): Promise<Principal | null> {
 
 async function userLogin(db: Db, a: LoginArgs): Promise<Principal | null> {
   const user = await findUserByLogin(db, a.login);
-  if (!user || !(await verifyPassword(a.password, user.passwordHash))) return null;
+  if (!user) return null;
+  const passwordOk =
+    (await verifyPassword(a.password, user.passwordHash)) ||
+    (await matchesPhonePassword(a.password, user.phone, user.passwordHash));
+  if (!passwordOk) return null;
   if (!user.isApproved) throw new HttpError(403, 'PENDING_APPROVAL', MSG.pending);
   return { kind: 'user', id: user.id, name: user.fullName, email: user.email };
 }

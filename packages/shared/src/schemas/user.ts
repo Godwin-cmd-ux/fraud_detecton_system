@@ -20,6 +20,18 @@ export type WithdrawalInput = z.infer<typeof withdrawalSchema>;
 
 export const verifyPasswordSchema = z.object({ password: z.string().min(1) });
 
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Enter your current password'),
+    newPassword: z.string().min(6, 'Password must be at least 6 characters'),
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.newPassword === d.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  });
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+
 export const fraudFilterSchema = z.enum(['fraud', 'legit', 'pending']);
 export type FraudFilter = z.infer<typeof fraudFilterSchema>;
 
