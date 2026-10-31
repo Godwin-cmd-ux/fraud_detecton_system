@@ -47,6 +47,8 @@ pnpm dev
 
 Open <http://localhost:5173>. Vite proxies `/api` to the Node API on port 4000. The Python service runs on port 5000 and loads the artifacts in `models/`. Check <http://localhost:4000/api/health>: `db` and `ml.available` should both be `true`. If ML is unavailable, the API uses its rule-based fallback; inspect the Python terminal for model loading errors.
 
+USSD sends the caller an SMS for every new interaction, including menus, registration, PIN setup, balance checks, validation errors, and exits. Set `AT_API_KEY` and `AT_USERNAME` in `.env` to enable sending; use `sandbox` with a Sandbox key to receive messages in the Africa's Talking simulator. PIN values are never included in these notifications. Financial operations retain their existing receipts for the sender, recipient, or credited customer without an extra duplicate receipt to the caller. SMS is dispatched after the USSD database transaction commits, and gateway retries do not resend recorded notifications. Unauthenticated, invalid-number, and rate-limited callbacks do not send SMS. Provider failures do not prevent USSD use or undo completed wallet operations.
+
 On Windows, use `pnpm.cmd` if PowerShell blocks the `pnpm.ps1` shim. If you change the API port, update the proxy target in `apps/web/vite.config.ts` too.
 
 ## Demo accounts

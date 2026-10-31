@@ -1,9 +1,10 @@
 import type { Db } from '../db/client';
 import type { MlClient } from '../modules/fraud/mlClient';
-import type { SmsClient } from '../modules/sms/client';
+import type { SmsSender } from '../modules/sms/client';
 import { HttpError } from '../lib/errors';
 import { con, end, fit } from './text';
 import { normalizePhone } from './phone';
+import { bufferUssdSms } from './sms';
 import {
   countRecentCallbacks,
   deleteSession,
@@ -33,8 +34,7 @@ export interface UssdConfig {
 export interface UssdDeps {
   db: Db;
   ml: MlClient;
-  /** Absent in tests; wallet services then skip their SMS notices. */
-  sms?: SmsClient;
+  sms?: SmsSender;
   now: () => Date;
   config: UssdConfig;
 }
@@ -51,6 +51,11 @@ export interface CallbackInput {
 export interface CallbackResult {
   status: number;
   body: string;
+}
+
+interface ProcessedCallback extends CallbackResult {
+  /** Replays and throttled callbacks must not generate another SMS. */
+  skipSms?: boolean;
 }
 
 /**
@@ -83,8 +88,10 @@ export async function handleCallback(deps: UssdDeps, input: CallbackInput): Prom
   if (!phone) return { status: 200, body: end('Invalid phone number.') };
 
   const now = deps.now();
+  const notifications = bufferUssdSms(deps.sms);
+  let result: ProcessedCallback;
   try {
-    return await deps.db.transaction(async (tx) => {
+    result = await deps.db.transaction(async (tx): Promise<ProcessedCallback> => {
       const recent = await countRecentCallbacks(tx, phone, new Date(now.getTime() - 60_000));
       if (recent >= deps.config.rateLimitPerMin) {
         await logSecurityEvent(tx, {
@@ -95,11 +102,12 @@ export async function handleCallback(deps: UssdDeps, input: CallbackInput): Prom
           ip: input.ip,
           now,
         });
-        return { status: 200, body: end('Too many requests. Try again in a minute.') };
+        return { status: 200, body: end('Too many requests. Try again in a minute.'), skipSms: true };
       }
-      return run(tx, deps, input, phone, now);
+      return run(tx, { ...deps, sms: notifications.sms }, input, phone, now);
     });
   } catch (error) {
+    notifications.discard();
     await logSecurityEvent(deps.db, {
       type: 'INTERNAL_ERROR',
       phone,
@@ -108,8 +116,10 @@ export async function handleCallback(deps: UssdDeps, input: CallbackInput): Prom
       ip: input.ip,
       now,
     });
-    return { status: 200, body: end('Service is busy. Please dial again.') };
+    result = { status: 200, body: end('Service is busy. Please dial again.') };
   }
+  if (!result.skipSms) notifications.dispatch(phone, result.body);
+  return { status: result.status, body: result.body };
 }
 
 async function run(
@@ -118,7 +128,7 @@ async function run(
   input: CallbackInput,
   phone: string,
   now: Date,
-): Promise<CallbackResult> {
+): Promise<ProcessedCallback> {
   const started = Date.now();
   const rawText = (input.text ?? '').trim();
   const digest = textDigest(input.sessionId, rawText);
@@ -133,7 +143,7 @@ async function run(
       ip: input.ip,
       now,
     });
-    return { status: 200, body: cached.response };
+    return { status: 200, body: cached.response, skipSms: true };
   }
 
   const row = await lockSession(tx, input.sessionId);
@@ -141,7 +151,7 @@ async function run(
   // Re-check under the lock: a concurrent duplicate may have committed while we waited.
   if (row) {
     const again = await findLoggedRequest(tx, input.sessionId, digest);
-    if (again) return { status: 200, body: again.response };
+    if (again) return { status: 200, body: again.response, skipSms: true };
   }
 
   const expired = row ? row.expiresAt.getTime() <= now.getTime() : false;

@@ -1,5 +1,5 @@
 import { formatTsh } from '../../lib/money';
-import type { SmsClient } from './client';
+import type { SmsSender } from './client';
 
 /**
  * Customer-facing SMS notices.
@@ -21,7 +21,7 @@ export interface TransferNotice {
   reference: string;
 }
 
-export async function notifyTransferSent(sms: SmsClient | undefined, n: TransferNotice): Promise<void> {
+export async function notifyTransferSent(sms: SmsSender | undefined, n: TransferNotice): Promise<void> {
   if (!sms) return;
   await sms.send({
     to: n.senderPhone,
@@ -29,7 +29,7 @@ export async function notifyTransferSent(sms: SmsClient | undefined, n: Transfer
   });
 }
 
-export async function notifyTransferReceived(sms: SmsClient | undefined, n: TransferNotice): Promise<void> {
+export async function notifyTransferReceived(sms: SmsSender | undefined, n: TransferNotice): Promise<void> {
   if (!sms) return;
   await sms.send({
     to: n.receiverPhone,
@@ -45,7 +45,7 @@ export interface WithdrawalNotice {
   reference: string;
 }
 
-export async function notifyWithdrawal(sms: SmsClient | undefined, n: WithdrawalNotice): Promise<void> {
+export async function notifyWithdrawal(sms: SmsSender | undefined, n: WithdrawalNotice): Promise<void> {
   if (!sms) return;
   await sms.send({
     to: n.phone,
@@ -61,7 +61,7 @@ export interface BlockedNotice {
 }
 
 /** A fraud rule stopped the operation; no money moved, so the customer is told why. */
-export async function notifyTransactionBlocked(sms: SmsClient | undefined, n: BlockedNotice): Promise<void> {
+export async function notifyTransactionBlocked(sms: SmsSender | undefined, n: BlockedNotice): Promise<void> {
   if (!sms) return;
   const articles = n.kind === 'transfer' ? 'transfer' : 'withdrawal';
   await sms.send({
@@ -79,7 +79,7 @@ export interface AdjustmentNotice {
   reason?: string | null;
 }
 
-export async function notifyBalanceAdjustment(sms: SmsClient | undefined, n: AdjustmentNotice): Promise<void> {
+export async function notifyBalanceAdjustment(sms: SmsSender | undefined, n: AdjustmentNotice): Promise<void> {
   if (!sms) return;
   const verb = n.direction === 'credit' ? 'credited with' : 'debited by';
   const reason = n.reason?.trim() ? ` Reason: ${n.reason.trim()}` : '';

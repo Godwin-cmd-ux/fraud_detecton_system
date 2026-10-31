@@ -15,7 +15,7 @@ import type { PatternBlock, VelocityContext } from '../fraud/patterns';
 import { applyTransferRules, isFlaggedForReview } from '../fraud/rules';
 import { getLocationChange, getVelocityContext } from '../fraud/velocity';
 import { notifyTransactionBlocked, notifyTransferReceived, notifyTransferSent } from '../sms/notifications';
-import type { SmsClient } from '../sms/client';
+import type { SmsSender } from '../sms/client';
 import { findActiveUserById, findUserByCard, findUserById, updateUserLocation } from '../users/repo';
 import type { UserRow } from '../users/repo';
 import { creditBalance, debitBalance, insertTransaction } from './repo';
@@ -26,7 +26,7 @@ export interface TransferDeps {
   ml: MlClient;
   now: () => Date;
   /** Absent in tests and when SMS is not configured. */
-  sms?: SmsClient;
+  sms?: SmsSender;
 }
 
 export interface TransferCommand {

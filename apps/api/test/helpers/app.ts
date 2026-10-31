@@ -3,6 +3,7 @@ import supertest from 'supertest';
 import { createApp } from '../../src/http/app';
 import type { Db } from '../../src/db/client';
 import type { MlClient } from '../../src/modules/fraud/mlClient';
+import type { SmsSender } from '../../src/modules/sms/client';
 import { ML_FALLBACK } from '../../src/modules/fraud/rules';
 import { setupTestDb, testPool } from './db';
 import { mlMock } from './mlMock';
@@ -16,13 +17,14 @@ export interface TestApp {
   clock: { now: Date };
 }
 
-export async function makeTestApp(opts: { ml?: MlClient; now?: Date } = {}): Promise<TestApp> {
+export async function makeTestApp(opts: { ml?: MlClient; now?: Date; sms?: SmsSender } = {}): Promise<TestApp> {
   const db = await setupTestDb();
   const clock = { now: opts.now ?? new Date() };
   const app = createApp({
     db,
     pool: testPool(),
     ml: opts.ml ?? mlMock(ML_FALLBACK),
+    sms: opts.sms,
     now: () => clock.now,
     sessionSecret: 'test-secret-test-secret',
     corsOrigin: 'http://localhost:5173',

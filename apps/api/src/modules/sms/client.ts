@@ -51,6 +51,10 @@ export interface SendSmsResult {
   recipients: SmsRecipient[];
 }
 
+export interface SmsSender {
+  send(input: SendSmsInput): Promise<SendSmsResult | null>;
+}
+
 /**
  * Numbers may be stored with spaces or dashes, and some were entered in the local `0XXXXXXXXX`
  * form. The gateway wants a bare international number, so a local number is expanded to +255.
@@ -60,7 +64,7 @@ const normaliseNumber = (value: string): string => {
   return /^0\d{9}$/.test(bare) ? `+255${bare.slice(1)}` : bare;
 };
 
-export class SmsClient {
+export class SmsClient implements SmsSender {
   private readonly sms: SmsService | null;
 
   constructor(

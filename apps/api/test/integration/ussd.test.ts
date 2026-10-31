@@ -1,12 +1,14 @@
-import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import bcrypt from 'bcryptjs';
 import { eq } from 'drizzle-orm';
 import { env } from '../../src/config/env';
-import { adminActions, transactions, users, ussdRequests, ussdSessions } from '../../src/db/schema';
+import { adminActions, admins, transactions, users, ussdRequests, ussdSessions } from '../../src/db/schema';
 import { loginAs, makeTestApp } from '../helpers/app';
 import type { TestApp } from '../helpers/app';
 import { closeTestDb, truncateAll } from '../helpers/db';
 import { createAdmin, createUser } from '../helpers/fixtures';
+import type { SendSmsInput } from '../../src/modules/sms/client';
+import * as ussdRepo from '../../src/ussd/repo';
 
 const TOKEN = env.USSD_CALLBACK_SECRET;
 const NOON = new Date('2026-10-29T12:00:00Z');
@@ -52,6 +54,7 @@ beforeEach(async () => {
 });
 
 afterAll(closeTestDb);
+afterEach(() => vi.restoreAllMocks());
 
 describe('USSD callback endpoint', () => {
   it('rejects a callback that does not carry the shared secret', async () => {
@@ -378,5 +381,171 @@ describe('integration with the web application', () => {
     const menu = await f();
     expect(menu.text).toContain('Neema');
     expect((await f('1')).text).toContain('Neema Joseph');
+  });
+});
+
+describe('SMS for USSD interactions', () => {
+  const send = vi.fn(async (_input: SendSmsInput) => null);
+
+  beforeEach(async () => {
+    send.mockReset();
+    send.mockResolvedValue(null);
+    t = await makeTestApp({ now: NOON, sms: { send } });
+  });
+
+  it('texts welcome, navigation, balance and exit screens once per new callback', async () => {
+    const user = await createUser(t.db, { phone: phoneFor(30), balance: 1_250_000 });
+    const session = sessionId();
+    const f = flow(session, user.phone);
+    await f();
+    await f('5');
+    await f('0');
+    await f('0');
+
+    expect(send).toHaveBeenCalledTimes(4);
+    expect(send.mock.calls[1]![0]).toEqual({
+      to: user.phone,
+      message: 'USSD\nAVAILABLE BALANCE\nTSh 1,250,000\nCurrency TZS\n0. Back',
+    });
+    expect(send.mock.calls[3]![0].message).toContain('Thank you');
+
+    await post(session, user.phone, '5*0*0');
+    expect(send).toHaveBeenCalledTimes(4);
+  });
+
+  it('texts registration progress and submission without copying PIN inputs', async () => {
+    const phone = phoneFor(31);
+    const f = flow(sessionId(), phone);
+    for (const input of [undefined, '1', 'SMS Test Customer', 'sms.ussd@test.local', '6842', '6842', '1']) {
+      await f(input);
+    }
+
+    expect(send).toHaveBeenCalledTimes(7);
+    expect(send.mock.calls.at(-1)![0].message).toContain('REGISTRATION SUBMITTED');
+    for (const [notice] of send.mock.calls) {
+      expect(notice.to).toBe(phone);
+      expect(notice.message).not.toContain('6842');
+    }
+  });
+
+  it('texts PIN creation, validation errors and lockout without revealing the PIN', async () => {
+    const sender = await createUser(t.db, { phone: phoneFor(32), balance: 100_000 });
+    const receiver = await createUser(t.db, { phone: phoneFor(33), balance: 0 });
+    const f = flow(sessionId(), sender.phone);
+    for (const input of [undefined, '2', receiver.phone, '1000', '1', '6842', '6842']) {
+      await f(input);
+    }
+    expect(send.mock.calls.at(-1)![0].message).toContain('PIN set');
+    for (const input of ['9461', '9461', '9461']) await f(input);
+    expect(send.mock.calls.at(-1)![0].message).toContain('Locked for 15 min');
+    expect(send.mock.calls.some(([n]) => n.message.includes('2 attempt(s) left'))).toBe(true);
+    for (const [notice] of send.mock.calls) {
+      expect(notice.message).not.toContain('6842');
+      expect(notice.message).not.toContain('9461');
+    }
+    expect(await balanceOf(sender.id)).toBe(100_000);
+  });
+
+  async function pendingTransfer() {
+    const sender = await createUser(t.db, { phone: phoneFor(34), balance: 100_000 });
+    const receiver = await createUser(t.db, { phone: phoneFor(35), balance: 0 });
+    await t.db.update(users).set({ transactionPinHash: await bcrypt.hash('6842', 4) })
+      .where(eq(users.id, sender.id));
+    const session = sessionId();
+    const f = flow(session, sender.phone);
+    for (const input of [undefined, '2', receiver.phone, '1000']) await f(input);
+    send.mockClear();
+    return { sender, receiver, session, f };
+  }
+
+  it('keeps one receipt per transfer participant and does not resend on gateway retries', async () => {
+    const { sender, receiver, session, f } = await pendingTransfer();
+    expect((await f('6842')).text).toContain('Sent TSh 1,000');
+    expect(send).toHaveBeenCalledTimes(2);
+    expect(send.mock.calls.filter(([n]) => n.to === sender.phone)).toHaveLength(1);
+    expect(send.mock.calls.filter(([n]) => n.to === receiver.phone)).toHaveLength(1);
+    expect(send.mock.calls[0]![0].message).toContain('You sent');
+    expect(send.mock.calls[1]![0].message).toContain('You received');
+
+    await post(session, sender.phone, `2*${receiver.phone}*1000*6842`);
+    expect(send).toHaveBeenCalledTimes(2);
+    expect(await balanceOf(receiver.id)).toBe(1000);
+  });
+
+  it('keeps one withdrawal receipt for the caller', async () => {
+    const user = await createUser(t.db, { phone: phoneFor(37), balance: 100_000 });
+    await t.db.update(users).set({ transactionPinHash: await bcrypt.hash('6842', 4) })
+      .where(eq(users.id, user.id));
+    const f = flow(sessionId(), user.phone);
+    for (const input of [undefined, '3', '1000']) await f(input);
+    send.mockClear();
+
+    expect((await f('6842')).text).toContain('Withdrew TSh 1,000');
+    expect(send).toHaveBeenCalledExactlyOnceWith({
+      to: user.phone,
+      message: expect.stringContaining('You withdrew'),
+    });
+    expect(await balanceOf(user.id)).toBe(98_989);
+  });
+
+  it('texts an administrator the outcome and preserves the credited customer receipt', async () => {
+    const admin = await createAdmin(t.db, { phone: phoneFor(38) });
+    const user = await createUser(t.db, { phone: phoneFor(39), balance: 0 });
+    await t.db.update(admins).set({ pinHash: await bcrypt.hash('6842', 4) })
+      .where(eq(admins.id, admin.id));
+    const f = flow(sessionId(), admin.phone!);
+    for (const input of [undefined, '6', '1', user.phone, '1', '2500', 'SMS deposit test', '1']) {
+      await f(input);
+    }
+    send.mockClear();
+
+    expect((await f('6842')).text).toContain('Done. Bal TSh 2,500');
+    expect(send).toHaveBeenCalledTimes(2);
+    expect(send).toHaveBeenCalledWith({
+      to: user.phone, message: expect.stringContaining('credited with'),
+    });
+    expect(send).toHaveBeenCalledWith({
+      to: admin.phone, message: expect.stringContaining('USSD\nDone. Bal TSh 2,500'),
+    });
+    expect(await balanceOf(user.id)).toBe(2500);
+  });
+
+  it('does not send payment receipts if the outer USSD transaction rolls back', async () => {
+    const { sender, receiver, f } = await pendingTransfer();
+    vi.spyOn(ussdRepo, 'writeRequest').mockRejectedValueOnce(new Error('Simulated ledger failure'));
+    const result = await f('6842');
+
+    expect(result.text).toContain('Service is busy');
+    expect(await balanceOf(sender.id)).toBe(100_000);
+    expect(await balanceOf(receiver.id)).toBe(0);
+    expect(send).toHaveBeenCalledExactlyOnceWith({
+      to: sender.phone, message: 'USSD\nService is busy. Please dial again.',
+    });
+  });
+
+  it('keeps USSD and committed transfers working when the SMS provider rejects sending', async () => {
+    const { receiver, f } = await pendingTransfer();
+    send.mockRejectedValue(new Error('SMS provider unavailable'));
+    const result = await f('6842');
+    expect(result.status).toBe(200);
+    expect(result.text).toContain('Sent TSh 1,000');
+    expect(await balanceOf(receiver.id)).toBe(1000);
+    expect(send).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not send SMS for unauthenticated or rate-limited callbacks', async () => {
+    await t.agent().post('/api/ussd/callback').type('form').send({
+      sessionId: sessionId(), phoneNumber: phoneFor(36), text: '',
+    });
+    expect(send).not.toHaveBeenCalled();
+
+    const phone = phoneFor(36);
+    for (let i = 0; i < env.USSD_RATE_LIMIT_PER_MIN; i++) {
+      await post(sessionId(), phone, '');
+    }
+    send.mockClear();
+    const result = await post(sessionId(), phone, '');
+    expect(result.text).toContain('Too many requests');
+    expect(send).not.toHaveBeenCalled();
   });
 });

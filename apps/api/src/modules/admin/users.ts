@@ -17,7 +17,7 @@ import { newTransactionId } from '../../lib/ids';
 import { formatTsh, num } from '../../lib/money';
 import { hashPassword } from '../../lib/password';
 import { notifyBalanceAdjustment } from '../sms/notifications';
-import type { SmsClient } from '../sms/client';
+import type { SmsSender } from '../sms/client';
 import { assertUserUnique, hashAnswers } from '../auth/register';
 import { creditBalance, insertTransaction } from '../transactions/repo';
 import { logAdminAction } from './audit';
@@ -223,7 +223,7 @@ export async function addBalance(
   userAgent: string | null,
   now: Date,
   /** Absent in tests and when SMS is not configured. */
-  sms?: SmsClient,
+  sms?: SmsSender,
 ): Promise<{ newBalance: number; transactionId: string; message: string }> {
   const user = await requireUserRow(db, id);
   let transactionId = newTransactionId(now);

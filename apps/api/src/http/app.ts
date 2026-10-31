@@ -5,7 +5,7 @@ import type { Logger } from 'pino';
 import type pg from 'pg';
 import type { Db } from '../db/client';
 import type { MlClient } from '../modules/fraud/mlClient';
-import type { SmsClient } from '../modules/sms/client';
+import type { SmsSender } from '../modules/sms/client';
 import { HttpError } from '../lib/errors';
 import { csrfGuard } from './middleware/csrf';
 import { errorHandler } from './middleware/errorHandler';
@@ -21,7 +21,7 @@ export interface AppDeps {
   pool: pg.Pool;
   ml: MlClient;
   /** Africa's Talking SMS sender; optional so tests can omit it. */
-  sms?: SmsClient;
+  sms?: SmsSender;
   now: () => Date;
   sessionSecret: string;
   corsOrigin: string;
